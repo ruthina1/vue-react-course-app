@@ -29,14 +29,17 @@
 
         <!-- Desktop Navigation Links -->
         <div class="hidden md:flex items-center space-x-8">
+          <router-link to="/vue" class="text-gray-700 hover:text-black transition-colors">
+            Vue Course
+          </router-link>
+          <router-link to="/react" class="text-gray-700 hover:text-black transition-colors">
+            React Course
+          </router-link>
           <a href="#resources" class="text-gray-700 hover:text-black transition-colors">
             Resources
           </a>
           <a href="#showcase" class="text-gray-700 hover:text-black transition-colors">
             Showcase
-          </a>
-          <a href="#lessons" class="text-gray-700 hover:text-black transition-colors">
-            Lessons
           </a>
         </div>
 
@@ -80,14 +83,17 @@
       -->
       <div v-if="isMobileMenuOpen" class="md:hidden py-4 border-t border-gray-200">
         <div class="flex flex-col space-y-4">
+          <router-link to="/vue" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+            Vue Course
+          </router-link>
+          <router-link to="/react" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+             React Course
+          </router-link>
           <a href="#resources" class="text-gray-700 hover:text-black transition-colors">
             Resources
           </a>
           <a href="#showcase" class="text-gray-700 hover:text-black transition-colors">
             Showcase
-          </a>
-          <a href="#lessons" class="text-gray-700 hover:text-black transition-colors">
-            Lessons
           </a>
           <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
             <button class="text-left text-gray-700 hover:text-black transition-colors">

@@ -19,6 +19,8 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import VueView from '../views/VueView.vue'
+import ReactView from '../views/ReactView.vue'
 
 // Define all routes in your application
 const routes = [
@@ -27,7 +29,16 @@ const routes = [
     name: 'home',
     component: HomeView
   },
-  // You can add more routes here as you build more pages
+  {
+    path: '/vue',
+    name: 'vue',
+    component: VueView
+  },
+  {
+    path: '/react',
+    name: 'react',
+    component: ReactView
+  },
   // {
   //   path: '/about',
   //   name: 'about',

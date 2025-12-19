@@ -25,7 +25,7 @@
     <div class="max-w-7xl mx-auto text-center">
       <!-- Badge -->
       <div class="inline-flex items-center px-4 py-2 bg-black/5 rounded-full mb-8">
-        <span class="text-sm font-medium text-gray-700">🎓 Learn Vue.js & React</span>
+        <span class="text-sm font-medium text-gray-700">{{ badgeText }}</span>
       </div>
 
       <!-- Main Heading -->
@@ -36,18 +36,17 @@
         Vue automatically updates the DOM when the data changes.
       -->
       <h1 class="text-5xl md:text-7xl font-bold text-black mb-6 leading-tight">
-        Dev Toolkit
+        {{ title }}
       </h1>
 
       <!-- Subheading -->
       <h2 class="text-2xl md:text-3xl font-semibold text-gray-700 mb-8">
-        Built to Flex
+        {{ subtitle }}
       </h2>
 
       <!-- Description -->
       <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed">
-        Platform packed with Vue.js & React resources, components, lessons and interactive examples.
-        Learn by building real-world projects step by step.
+        {{ description }}
       </p>
 
       <!-- CTA Buttons -->
@@ -87,22 +86,39 @@
 
 <script setup>
 /*
-  REACTIVE DATA WITH ref()
-  =========================
+  PROPS DEFINITION
+  ================
   
-  We're using ref() to create reactive data that can be displayed in the template.
-  The stats array will be looped through using v-for.
+  defineProps() is a compiler macro used to define props in <script setup>.
+  It doesn't need to be imported.
 */
 
-import { ref } from 'vue'
-
-// Define stats data
-// This is reactive - if we change it, the template updates automatically
-const stats = ref([
-  { value: '50+', label: 'Components' },
-  { value: '100+', label: 'Lessons' },
-  { value: '1K+', label: 'Students' }
-])
+const props = defineProps({
+  badgeText: {
+    type: String,
+    default: '🎓 Learn Vue.js & React'
+  },
+  title: {
+    type: String,
+    default: 'Dev Toolkit'
+  },
+  subtitle: {
+    type: String,
+    default: 'Built to Flex'
+  },
+  description: {
+    type: String,
+    default: 'Platform packed with Vue.js & React resources, components, lessons and interactive examples. Learn by building real-world projects step by step.'
+  },
+  stats: {
+    type: Array,
+    default: () => [
+      { value: '50+', label: 'Components' },
+      { value: '100+', label: 'Lessons' },
+      { value: '1K+', label: 'Students' }
+    ]
+  }
+})
 
 /*
   EVENT HANDLER FUNCTIONS

@@ -39,7 +39,7 @@
       -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          v-for="resource in resources"
+          v-for="resource in filteredResources"
           :key="resource.id"
           class="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer border border-gray-100"
         >
@@ -80,7 +80,14 @@
   from APIs in real applications.
 */
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+
+const props = defineProps({
+  topic: {
+    type: String,
+    default: 'all' // 'all', 'vue', 'react'
+  }
+})
 
 // Resources data - in a real app, this might come from an API
 const resources = ref([
@@ -89,44 +96,56 @@ const resources = ref([
     title: 'Vue Components',
     description: 'Ready-to-use Vue components with detailed explanations. Learn by example.',
     category: 'Components',
-    icon: '⚡'
+    icon: '⚡',
+    topics: ['vue']
   },
   {
     id: 2,
     title: 'React Patterns',
     description: 'Modern React patterns and best practices. Hooks, Context, and more.',
     category: 'Patterns',
-    icon: '🎯'
+    icon: '🎯',
+    topics: ['react']
   },
   {
     id: 3,
     title: 'Interactive Lessons',
     description: 'Step-by-step tutorials with code examples. Build real projects.',
     category: 'Lessons',
-    icon: '📚'
+    icon: '📚',
+    topics: ['vue', 'react']
   },
   {
     id: 4,
     title: 'State Management',
     description: 'Learn Pinia (Vue) and Redux (React). Manage complex application state.',
     category: 'State',
-    icon: '🗄️'
+    icon: '🗄️',
+    topics: ['vue', 'react']
   },
   {
     id: 5,
     title: 'Routing',
     description: 'Vue Router and React Router. Navigate between pages seamlessly.',
     category: 'Navigation',
-    icon: '🧭'
+    icon: '🧭',
+    topics: ['vue', 'react']
   },
   {
     id: 6,
     title: 'Animations',
     description: 'Smooth transitions and animations. GSAP, Framer Motion, and CSS.',
     category: 'Animations',
-    icon: '✨'
+    icon: '✨',
+    topics: ['vue', 'react']
   }
 ])
+
+// Filter resources based on the topic prop
+const filteredResources = computed(() => {
+  if (props.topic === 'all') return resources.value
+  return resources.value.filter(resource => resource.topics.includes(props.topic))
+})
 </script>
 
 <style scoped>
