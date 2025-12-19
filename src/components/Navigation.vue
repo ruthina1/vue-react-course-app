@@ -28,7 +28,7 @@
         </div>
 
         <!-- Desktop Navigation Links -->
-        <div class="hidden md:flex items-center space-x-8">
+        <div v-if="authStore.isLoggedIn" class="hidden md:flex items-center space-x-8">
           <router-link to="/vue" class="text-gray-700 hover:text-black transition-colors">
             Vue Course
           </router-link>
@@ -45,12 +45,20 @@
 
         <!-- CTA Buttons -->
         <div class="hidden md:flex items-center space-x-4">
-          <button class="text-gray-700 hover:text-black transition-colors">
-            Login
-          </button>
-          <button class="btn-primary">
-            Join
-          </button>
+          <template v-if="authStore.isLoggedIn">
+            <span class="text-gray-700">{{ authStore.user?.name }}</span>
+            <button @click="handleLogout" class="text-gray-700 hover:text-black transition-colors">
+              Logout
+            </button>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="text-gray-700 hover:text-black transition-colors">
+              Login
+            </router-link>
+            <router-link to="/join" class="btn-primary">
+              Join
+            </router-link>
+          </template>
         </div>
 
         <!-- Mobile Menu Button -->
@@ -83,26 +91,36 @@
       -->
       <div v-if="isMobileMenuOpen" class="md:hidden py-4 border-t border-gray-200">
         <div class="flex flex-col space-y-4">
-          <router-link to="/vue" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
-            Vue Course
-          </router-link>
-          <router-link to="/react" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
-             React Course
-          </router-link>
-          <a href="#resources" class="text-gray-700 hover:text-black transition-colors">
-            Resources
-          </a>
-          <a href="#showcase" class="text-gray-700 hover:text-black transition-colors">
-            Showcase
-          </a>
-          <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-            <button class="text-left text-gray-700 hover:text-black transition-colors">
-              Login
-            </button>
-            <button class="btn-primary w-full">
-              Join
-            </button>
-          </div>
+          <template v-if="authStore.isLoggedIn">
+            <router-link to="/vue" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+              Vue Course
+            </router-link>
+            <router-link to="/react" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+              React Course
+            </router-link>
+            <a href="#resources" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+              Resources
+            </a>
+            <a href="#showcase" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+              Showcase
+            </a>
+            <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+              <span class="text-gray-700">{{ authStore.user?.name }}</span>
+              <button @click="handleLogout" class="text-left text-gray-700 hover:text-black transition-colors">
+                Logout
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+              <router-link to="/login" class="text-left text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+                Login
+              </router-link>
+              <router-link to="/join" class="btn-primary w-full" @click="toggleMobileMenu">
+                Join
+              </router-link>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -129,10 +147,18 @@
 */
 
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 // Create reactive state for mobile menu
 // Initial value is false (menu is closed)
 const isMobileMenuOpen = ref(false)
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+// Initialize auth on component mount
+authStore.initializeAuth()
 
 /*
   METHODS/FUNCTIONS
@@ -152,6 +178,13 @@ const isMobileMenuOpen = ref(false)
 function toggleMobileMenu() {
   // Modify reactive state - this triggers re-render
   isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+// Handle logout
+function handleLogout() {
+  authStore.logout()
+  router.push('/')
+  toggleMobileMenu()
 }
 </script>
 

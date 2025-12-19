@@ -5,6 +5,9 @@
 */
 @import "tailwindcss";
 
+/* Import Inter font (matching Osmo style) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* 
   Custom Base Styles
   You can add your own base styles here that will apply globally
@@ -12,6 +15,9 @@
 @layer base {
   body {
     @apply antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -21,11 +27,38 @@
 */
 @layer components {
   .btn-primary {
-    @apply px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors;
+    @apply px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-all duration-300;
+    cursor: pointer;
+    letter-spacing: -0.01em;
   }
   
   .btn-secondary {
-    @apply px-6 py-3 bg-white text-black border border-black rounded-lg font-medium hover:bg-gray-50 transition-colors;
+    @apply px-6 py-3 bg-white text-black border border-black rounded-lg font-medium hover:bg-gray-50 transition-all duration-300;
+    cursor: pointer;
+    letter-spacing: -0.01em;
   }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
