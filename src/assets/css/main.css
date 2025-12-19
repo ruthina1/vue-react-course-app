@@ -1,0 +1,31 @@
+/* 
+  Tailwind CSS Directives
+  These directives inject Tailwind's base, components, and utilities into your CSS
+  Works with Tailwind CSS v4 via @tailwindcss/postcss plugin
+*/
+@import "tailwindcss";
+
+/* 
+  Custom Base Styles
+  You can add your own base styles here that will apply globally
+*/
+@layer base {
+  body {
+    @apply antialiased;
+  }
+}
+
+/* 
+  Custom Component Styles
+  Reusable component classes can be defined here using @layer components
+*/
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-white text-black border border-black rounded-lg font-medium hover:bg-gray-50 transition-colors;
+  }
+}
+

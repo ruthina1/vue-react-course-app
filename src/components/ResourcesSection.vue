@@ -1,0 +1,135 @@
+<!--
+  RESOURCESSECTION.VUE - Resources Grid Component
+  ===============================================
+  
+  This component demonstrates:
+  - v-for with objects
+  - Dynamic class binding
+  - Component props (if we break cards into separate component)
+  - Computed properties
+  
+  Vue Concepts:
+  - v-for: Loop through arrays/objects
+  - :class: Dynamic class binding
+  - :key: Unique identifier for list items
+-->
+
+<template>
+  <section id="resources" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div class="max-w-7xl mx-auto">
+      <!-- Section Header -->
+      <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-bold text-black mb-4">
+          The Platform
+        </h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          A growing toolkit for creative developers. Access everything with a single membership.
+        </p>
+      </div>
+
+      <!-- Resources Grid -->
+      <!-- 
+        v-for DIRECTIVE WITH OBJECTS
+        =============================
+        We're looping through the resources array.
+        Each resource object has: id, title, description, category, icon
+        
+        :key="resource.id" ensures Vue can efficiently track each card
+        when the list changes (add, remove, reorder).
+      -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="resource in resources"
+          :key="resource.id"
+          class="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer border border-gray-100"
+        >
+          <!-- Category Badge -->
+          <div class="inline-block px-3 py-1 bg-gray-100 rounded-full mb-4">
+            <span class="text-xs font-medium text-gray-700">{{ resource.category }}</span>
+          </div>
+
+          <!-- Icon/Emoji -->
+          <div class="text-4xl mb-4">{{ resource.icon }}</div>
+
+          <!-- Title -->
+          <h3 class="text-xl font-bold text-black mb-2">{{ resource.title }}</h3>
+
+          <!-- Description -->
+          <p class="text-gray-600 mb-4">{{ resource.description }}</p>
+
+          <!-- Learn More Link -->
+          <a href="#" class="text-black font-medium hover:underline inline-flex items-center">
+            Learn More
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup>
+/*
+  REACTIVE DATA
+  =============
+  
+  We define an array of resource objects. Each object represents a card.
+  This data structure is common in Vue apps - you'll fetch similar data
+  from APIs in real applications.
+*/
+
+import { ref } from 'vue'
+
+// Resources data - in a real app, this might come from an API
+const resources = ref([
+  {
+    id: 1,
+    title: 'Vue Components',
+    description: 'Ready-to-use Vue components with detailed explanations. Learn by example.',
+    category: 'Components',
+    icon: '⚡'
+  },
+  {
+    id: 2,
+    title: 'React Patterns',
+    description: 'Modern React patterns and best practices. Hooks, Context, and more.',
+    category: 'Patterns',
+    icon: '🎯'
+  },
+  {
+    id: 3,
+    title: 'Interactive Lessons',
+    description: 'Step-by-step tutorials with code examples. Build real projects.',
+    category: 'Lessons',
+    icon: '📚'
+  },
+  {
+    id: 4,
+    title: 'State Management',
+    description: 'Learn Pinia (Vue) and Redux (React). Manage complex application state.',
+    category: 'State',
+    icon: '🗄️'
+  },
+  {
+    id: 5,
+    title: 'Routing',
+    description: 'Vue Router and React Router. Navigate between pages seamlessly.',
+    category: 'Navigation',
+    icon: '🧭'
+  },
+  {
+    id: 6,
+    title: 'Animations',
+    description: 'Smooth transitions and animations. GSAP, Framer Motion, and CSS.',
+    category: 'Animations',
+    icon: '✨'
+  }
+])
+</script>
+
+<style scoped>
+/* Component-specific styles */
+</style>
+
