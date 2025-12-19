@@ -58,12 +58,20 @@
           <p class="text-gray-600 mb-4">{{ resource.description }}</p>
 
           <!-- Learn More Link -->
-          <a href="#" class="text-black font-medium hover:underline inline-flex items-center">
+          <a 
+            v-if="resource.link" 
+            :href="resource.link" 
+            target="_blank"
+            class="text-black font-medium hover:underline inline-flex items-center"
+          >
             Learn More
             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </a>
+          <span v-else class="text-gray-400 text-sm italic">
+            Content coming soon
+          </span>
         </div>
       </div>
     </div>
@@ -75,12 +83,11 @@
   REACTIVE DATA
   =============
   
-  We define an array of resource objects. Each object represents a card.
-  This data structure is common in Vue apps - you'll fetch similar data
-  from APIs in real applications.
+  We filter resources based on the filtered topic prop using the useCourseData composable.
 */
 
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
+import { useCourseData } from '../composables/useCourseData'
 
 const props = defineProps({
   topic: {
@@ -89,63 +96,10 @@ const props = defineProps({
   }
 })
 
-// Resources data - in a real app, this might come from an API
-const resources = ref([
-  {
-    id: 1,
-    title: 'Vue Components',
-    description: 'Ready-to-use Vue components with detailed explanations. Learn by example.',
-    category: 'Components',
-    icon: '⚡',
-    topics: ['vue']
-  },
-  {
-    id: 2,
-    title: 'React Patterns',
-    description: 'Modern React patterns and best practices. Hooks, Context, and more.',
-    category: 'Patterns',
-    icon: '🎯',
-    topics: ['react']
-  },
-  {
-    id: 3,
-    title: 'Interactive Lessons',
-    description: 'Step-by-step tutorials with code examples. Build real projects.',
-    category: 'Lessons',
-    icon: '📚',
-    topics: ['vue', 'react']
-  },
-  {
-    id: 4,
-    title: 'State Management',
-    description: 'Learn Pinia (Vue) and Redux (React). Manage complex application state.',
-    category: 'State',
-    icon: '🗄️',
-    topics: ['vue', 'react']
-  },
-  {
-    id: 5,
-    title: 'Routing',
-    description: 'Vue Router and React Router. Navigate between pages seamlessly.',
-    category: 'Navigation',
-    icon: '🧭',
-    topics: ['vue', 'react']
-  },
-  {
-    id: 6,
-    title: 'Animations',
-    description: 'Smooth transitions and animations. GSAP, Framer Motion, and CSS.',
-    category: 'Animations',
-    icon: '✨',
-    topics: ['vue', 'react']
-  }
-])
+const { getResources } = useCourseData()
 
 // Filter resources based on the topic prop
-const filteredResources = computed(() => {
-  if (props.topic === 'all') return resources.value
-  return resources.value.filter(resource => resource.topics.includes(props.topic))
-})
+const filteredResources = computed(() => getResources(props.topic))
 </script>
 
 <style scoped>

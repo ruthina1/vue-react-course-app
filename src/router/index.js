@@ -21,6 +21,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import VueView from '../views/VueView.vue'
 import ReactView from '../views/ReactView.vue'
+import LessonView from '../views/LessonView.vue'
 
 // Define all routes in your application
 const routes = [
@@ -38,6 +39,12 @@ const routes = [
     path: '/react',
     name: 'react',
     component: ReactView
+  },
+  {
+    path: '/:courseId/lesson/:lessonId',
+    name: 'lesson',
+    component: LessonView,
+    props: true
   },
   // {
   //   path: '/about',

@@ -38,10 +38,18 @@
                 </div>
                 
                 <div class="ml-4 flex-1">
-                  <span :class="{'font-bold text-blue-600': item.isPractice, 'text-gray-700': !item.isPractice}">
+                  <!-- Link if courseId is present, otherwise span -->
+                  <component 
+                    :is="courseId ? 'router-link' : 'span'"
+                    :to="courseId ? `/${courseId}/lesson/${item.slug}` : undefined"
+                    :class="[
+                      {'font-bold text-blue-600': item.isPractice, 'text-gray-700': !item.isPractice},
+                      courseId ? 'hover:text-blue-500 cursor-pointer transition-colors block' : ''
+                    ]"
+                  >
                     <span v-if="item.isPractice" class="mr-1">🛠️</span>
                     {{ item.text }}
-                  </span>
+                  </component>
 
                   <!-- Nested Items -->
                   <ul v-if="item.children && item.children.length" class="mt-2 ml-4 space-y-2">
@@ -70,6 +78,10 @@ defineProps({
     type: String,
     default: ''
   },
+  courseId: {
+    type: String,
+    default: ''
+  },
   modules: {
     type: Array,
     required: true,
@@ -79,8 +91,8 @@ defineProps({
     //     title: "Module Name",
     //     description: "Optional description",
     //     items: [
-    //       { text: "Topic 1", isPractice: false, children: [] },
-    //       { text: "Practice Task", isPractice: true }
+    //       { text: "Topic 1", isPractice: false, children: [], slug: "topic-1" },
+    //       { text: "Practice Task", isPractice: true, slug: "practice-task" }
     //     ]
     //   }
     // ]
