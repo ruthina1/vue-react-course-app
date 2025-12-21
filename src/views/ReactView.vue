@@ -19,6 +19,9 @@
       :stats="reactStats"
     />
     
+    <!-- Feature Highlights Section -->
+    <FeatureHighlights />
+    
     <!-- Roadmap Section -->
     <CourseRoadmap 
       title="React Learning Roadmap"
@@ -42,6 +45,7 @@
 import { ref } from 'vue'
 import Navigation from '../components/Navigation.vue'
 import HeroSection from '../components/HeroSection.vue'
+import FeatureHighlights from '../components/FeatureHighlights.vue'
 import ResourcesSection from '../components/ResourcesSection.vue'
 import ShowcaseSection from '../components/ShowcaseSection.vue'
 import Footer from '../components/Footer.vue'
