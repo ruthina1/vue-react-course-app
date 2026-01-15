@@ -48,8 +48,10 @@
             <span class="text-xs font-semibold text-gray-700 uppercase tracking-wide">{{ resource.category }}</span>
           </div>
 
-          <!-- Icon/Emoji -->
-          <div class="text-5xl mb-6 transition-transform duration-300 hover:scale-110">{{ resource.icon }}</div>
+          <!-- Icon -->
+          <div class="mb-6 transition-transform duration-300 hover:scale-110 text-gray-800">
+            <component :is="getIconComponent(resource.iconName)" :size="48" />
+          </div>
 
           <!-- Title -->
           <h3 class="text-2xl font-bold text-black mb-3 leading-tight">{{ resource.title }}</h3>
@@ -90,6 +92,9 @@
 
 import { computed } from 'vue'
 import { useCourseData } from '../composables/useCourseData'
+import { 
+  Zap, Target, BookOpen, Database, Compass, Sparkles 
+} from 'lucide-vue-next'
 
 const props = defineProps({
   topic: {
@@ -102,6 +107,20 @@ const { getResources } = useCourseData()
 
 // Filter resources based on the topic prop
 const filteredResources = computed(() => getResources(props.topic))
+
+// Icon mapping
+const iconComponents = {
+  Zap,
+  Target,
+  BookOpen,
+  Database,
+  Compass,
+  Sparkles
+}
+
+const getIconComponent = (iconName) => {
+  return iconComponents[iconName] || BookOpen
+}
 </script>
 
 <style scoped>

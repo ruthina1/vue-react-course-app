@@ -23,8 +23,8 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
         <!-- Feature 1 -->
         <div class="group">
-          <div class="mb-4 text-5xl transition-transform duration-300 group-hover:scale-110">
-            ⚡
+          <div class="mb-4 transition-transform duration-300 group-hover:scale-110">
+            <Zap :size="48" class="text-orange-500" />
           </div>
           <h3 class="text-2xl font-bold text-black mb-3">
             Build faster and better
@@ -36,8 +36,8 @@
 
         <!-- Feature 2 -->
         <div class="group">
-          <div class="mb-4 text-5xl transition-transform duration-300 group-hover:scale-110">
-            🎯
+          <div class="mb-4 transition-transform duration-300 group-hover:scale-110">
+            <Target :size="48" class="text-pink-500" />
           </div>
           <h3 class="text-2xl font-bold text-black mb-3">
             Practice without compromise
@@ -49,8 +49,8 @@
 
         <!-- Feature 3 -->
         <div class="group">
-          <div class="mb-4 text-5xl transition-transform duration-300 group-hover:scale-110">
-            📚
+          <div class="mb-4 transition-transform duration-300 group-hover:scale-110">
+            <BookOpen :size="48" class="text-green-500" />
           </div>
           <h3 class="text-2xl font-bold text-black mb-3">
             Clear documentation
@@ -62,8 +62,8 @@
 
         <!-- Feature 4 -->
         <div class="group">
-          <div class="mb-4 text-5xl transition-transform duration-300 group-hover:scale-110">
-            🚀
+          <div class="mb-4 transition-transform duration-300 group-hover:scale-110">
+            <Rocket :size="48" class="text-red-500" />
           </div>
           <h3 class="text-2xl font-bold text-black mb-3">
             A living and growing system
@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-// No props or reactive data needed for now
+import { Zap, Target, BookOpen, Rocket } from 'lucide-vue-next'
 </script>
 
 <style scoped>

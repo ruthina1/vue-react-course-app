@@ -48,7 +48,7 @@
                       'text-base leading-relaxed'
                     ]"
                   >
-                    <span v-if="item.isPractice" class="mr-1">🛠️</span>
+                    <Wrench v-if="item.isPractice" :size="16" class="inline-block mr-1" />
                     {{ item.text }}
                   </component>
 
@@ -70,6 +70,8 @@
 </template>
 
 <script setup>
+import { Wrench } from 'lucide-vue-next'
+
 defineProps({
   title: {
     type: String,

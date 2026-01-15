@@ -17,7 +17,7 @@
 -->
 
 <template>
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
@@ -29,24 +29,51 @@
 
         <!-- Desktop Navigation Links -->
         <div v-if="authStore.isLoggedIn" class="hidden md:flex items-center space-x-8">
-          <router-link to="/vue" class="text-gray-700 hover:text-black transition-colors">
+          <router-link 
+            to="/vue" 
+            class="transition-colors relative"
+            :class="isActive('/vue') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+          >
             Vue Course
+            <span v-if="isActive('/vue')" class="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
           </router-link>
-          <router-link to="/react" class="text-gray-700 hover:text-black transition-colors">
+          <router-link 
+            to="/react" 
+            class="transition-colors relative"
+            :class="isActive('/react') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+          >
             React Course
+            <span v-if="isActive('/react')" class="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
           </router-link>
-          <a href="#resources" class="text-gray-700 hover:text-black transition-colors">
+          <router-link 
+            to="/resources" 
+            class="transition-colors relative"
+            :class="isActive('/resources') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+          >
             Resources
-          </a>
-          <a href="#showcase" class="text-gray-700 hover:text-black transition-colors">
+            <span v-if="isActive('/resources')" class="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
+          </router-link>
+          <router-link 
+            to="/showcase" 
+            class="transition-colors relative"
+            :class="isActive('/showcase') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+          >
             Showcase
-          </a>
+            <span v-if="isActive('/showcase')" class="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
+          </router-link>
         </div>
 
         <!-- CTA Buttons -->
         <div class="hidden md:flex items-center space-x-4">
           <template v-if="authStore.isLoggedIn">
-            <span class="text-gray-700">{{ authStore.user?.name }}</span>
+            <router-link 
+              to="/profile" 
+              class="transition-colors relative"
+              :class="isActive('/profile') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+            >
+              {{ authStore.user?.name || 'Profile' }}
+              <span v-if="isActive('/profile')" class="absolute bottom-0 left-0 right-0 h-0.5 bg-black"></span>
+            </router-link>
             <button @click="handleLogout" class="text-gray-700 hover:text-black transition-colors">
               Logout
             </button>
@@ -92,20 +119,47 @@
       <div v-if="isMobileMenuOpen" class="md:hidden py-4 border-t border-gray-200">
         <div class="flex flex-col space-y-4">
           <template v-if="authStore.isLoggedIn">
-            <router-link to="/vue" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+            <router-link 
+              to="/vue" 
+              class="transition-colors"
+              :class="isActive('/vue') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+              @click="toggleMobileMenu"
+            >
               Vue Course
             </router-link>
-            <router-link to="/react" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+            <router-link 
+              to="/react" 
+              class="transition-colors"
+              :class="isActive('/react') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+              @click="toggleMobileMenu"
+            >
               React Course
             </router-link>
-            <a href="#resources" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+            <router-link 
+              to="/resources" 
+              class="transition-colors"
+              :class="isActive('/resources') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+              @click="toggleMobileMenu"
+            >
               Resources
-            </a>
-            <a href="#showcase" class="text-gray-700 hover:text-black transition-colors" @click="toggleMobileMenu">
+            </router-link>
+            <router-link 
+              to="/showcase" 
+              class="transition-colors"
+              :class="isActive('/showcase') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+              @click="toggleMobileMenu"
+            >
               Showcase
-            </a>
+            </router-link>
             <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-              <span class="text-gray-700">{{ authStore.user?.name }}</span>
+              <router-link 
+                to="/profile" 
+                class="text-left transition-colors"
+                :class="isActive('/profile') ? 'text-black font-semibold' : 'text-gray-700 hover:text-black'"
+                @click="toggleMobileMenu"
+              >
+                {{ authStore.user?.name || 'Profile' }}
+              </router-link>
               <button @click="handleLogout" class="text-left text-gray-700 hover:text-black transition-colors">
                 Logout
               </button>
@@ -146,8 +200,8 @@
   {{ count }}      // In template, Vue automatically unwraps ref
 */
 
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 // Create reactive state for mobile menu
@@ -155,10 +209,19 @@ import { useAuthStore } from '../stores/auth'
 const isMobileMenuOpen = ref(false)
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 // Initialize auth on component mount
 authStore.initializeAuth()
+
+// Check if route is active
+function isActive(path) {
+  if (path === '/vue' || path === '/react') {
+    return route.path === path || route.path.startsWith(path + '/lesson')
+  }
+  return route.path === path
+}
 
 /*
   METHODS/FUNCTIONS

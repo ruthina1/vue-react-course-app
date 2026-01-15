@@ -17,19 +17,8 @@
 <template>
   <section 
     ref="heroSection"
-    class="relative min-h-screen pt-32 pb-20 overflow-hidden bg-white cursor-area"
-    @mousemove="handleMouseMove"
-    @mouseleave="handleMouseLeave"
+    class="relative min-h-screen pt-32 pb-20 overflow-hidden bg-white"
   >
-    <!-- Custom Drag Cursor -->
-    <div 
-      ref="cursor"
-      class="custom-cursor"
-      :class="{ 'is-dragging': isDragging }"
-      :style="{ left: cursorX + 'px', top: cursorY + 'px', opacity: showCursor ? 1 : 0 }"
-    >
-      <span class="cursor-text">Drag</span>
-    </div>
 
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
       <!-- Header Text -->
@@ -45,15 +34,10 @@
         </p>
       </div>
 
-      <!-- Draggable Grid -->
+      <!-- Grid -->
       <div 
         ref="gridContainer"
         class="grid-container"
-        :class="{ 'is-dragging': isDragging }"
-        @mousedown="startDrag"
-        @mousemove="onDrag"
-        @mouseup="stopDrag"
-        @mouseleave="stopDrag"
       >
         <div
           v-for="(item, index) in gridItems"
@@ -65,7 +49,9 @@
           @mouseleave="handleItemLeave(index)"
         >
           <div class="item-content">
-            <div class="item-icon">{{ item.icon }}</div>
+            <div class="item-icon">
+              <component :is="getIconComponent(item.iconName)" :size="48" />
+            </div>
             <div class="item-title">{{ item.title }}</div>
             <div class="item-description">{{ item.description }}</div>
           </div>
@@ -98,8 +84,29 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import { 
+  Zap, Atom, Palette, BookOpen, Wrench, Rocket, 
+  Lightbulb, Book, Target 
+} from 'lucide-vue-next'
 
 const authStore = useAuthStore()
+
+// Icon mapping
+const iconComponents = {
+  Zap,
+  Atom,
+  Palette,
+  BookOpen,
+  Wrench,
+  Rocket,
+  Lightbulb,
+  Book,
+  Target
+}
+
+const getIconComponent = (iconName) => {
+  return iconComponents[iconName] || BookOpen
+}
 
 const props = defineProps({
   title: {
@@ -115,50 +122,27 @@ const props = defineProps({
 // Refs
 const heroSection = ref(null)
 const gridContainer = ref(null)
-const cursor = ref(null)
 const itemRefs = ref([])
 
 // State
-const cursorX = ref(0)
-const cursorY = ref(0)
-const showCursor = ref(false)
-const isDragging = ref(false)
-const lastMousePos = ref({ x: 0, y: 0 })
-const mouseDelta = ref({ x: 0, y: 0 })
 const hoveredIndex = ref(-1)
 const initialPositions = ref([])
-const cardOffsets = ref([])
-const animationFrameId = ref(null)
 
 // Grid items data - each card has its own speed/delay for staggered effect
 const gridItems = ref([
-  { icon: '⚡', title: 'Vue.js', description: 'Progressive Framework', x: 0, y: 0, speed: 0.08 },
-  { icon: '⚛️', title: 'React', description: 'UI Library', x: 0, y: 0, speed: 0.10 },
-  { icon: '🎨', title: 'Components', description: 'Reusable UI', x: 0, y: 0, speed: 0.12 },
-  { icon: '📚', title: 'Lessons', description: 'Step by step', x: 0, y: 0, speed: 0.09 },
-  { icon: '🛠️', title: 'Tools', description: 'Dev utilities', x: 0, y: 0, speed: 0.11 },
-  { icon: '🚀', title: 'Projects', description: 'Real examples', x: 0, y: 0, speed: 0.13 },
-  { icon: '💡', title: 'Tips', description: 'Best practices', x: 0, y: 0, speed: 0.07 },
-  { icon: '📖', title: 'Docs', description: 'Comprehensive', x: 0, y: 0, speed: 0.14 },
-  { icon: '🎯', title: 'Practice', description: 'Hands-on learning', x: 0, y: 0, speed: 0.15 },
+  { iconName: 'Zap', title: 'Vue.js', description: 'Progressive Framework', x: 0, y: 0, speed: 0.08 },
+  { iconName: 'Atom', title: 'React', description: 'UI Library', x: 0, y: 0, speed: 0.10 },
+  { iconName: 'Palette', title: 'Components', description: 'Reusable UI', x: 0, y: 0, speed: 0.12 },
+  { iconName: 'BookOpen', title: 'Lessons', description: 'Step by step', x: 0, y: 0, speed: 0.09 },
+  { iconName: 'Wrench', title: 'Tools', description: 'Dev utilities', x: 0, y: 0, speed: 0.11 },
+  { iconName: 'Rocket', title: 'Projects', description: 'Real examples', x: 0, y: 0, speed: 0.13 },
+  { iconName: 'Lightbulb', title: 'Tips', description: 'Best practices', x: 0, y: 0, speed: 0.07 },
+  { iconName: 'Book', title: 'Docs', description: 'Comprehensive', x: 0, y: 0, speed: 0.14 },
+  { iconName: 'Target', title: 'Practice', description: 'Hands-on learning', x: 0, y: 0, speed: 0.15 },
 ])
 
 // Initialize grid positions
 function recalculateGrid() {
-  // Reset offsets when recalculating
-  cardOffsets.value.forEach((offset, index) => {
-    if (offset) {
-      // Save current position to initial before recalculating
-      if (gridItems.value[index] && initialPositions.value[index]) {
-        initialPositions.value[index] = {
-          x: gridItems.value[index].x,
-          y: gridItems.value[index].y
-        }
-      }
-      offset.x = 0
-      offset.y = 0
-    }
-  })
   initializeGridPositions()
 }
 
@@ -186,9 +170,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', recalculateGrid)
-  if (animationFrameId.value) {
-    cancelAnimationFrame(animationFrameId.value)
-  }
 })
 
 function initializeGridPositions() {
@@ -213,150 +194,25 @@ function initializeGridPositions() {
     const baseX = startX + col * (itemWidth + spacing)
     const baseY = row * (itemHeight + spacing)
     
-    // Store initial position if not already set
-    if (initialPositions.value[index] === undefined) {
-      initialPositions.value[index] = { x: baseX, y: baseY }
-      cardOffsets.value[index] = { x: 0, y: 0 }
-    } else {
-      // Recalculate base position but keep offset
-      initialPositions.value[index] = { x: baseX, y: baseY }
-    }
+    // Store initial position
+    initialPositions.value[index] = { x: baseX, y: baseY }
     
-    // Use stored position or initial position
-    item.x = initialPositions.value[index].x
-    item.y = initialPositions.value[index].y
+    // Set item position
+    item.x = baseX
+    item.y = baseY
   })
 }
 
 function getItemStyle(item, index) {
   const hoverOffset = hoveredIndex.value === index ? 10 : 0
-  const offset = cardOffsets.value[index] || { x: 0, y: 0 }
   
   return {
-    transform: `translate(${item.x + offset.x}px, ${item.y + offset.y + hoverOffset}px)`,
-    transition: isDragging.value ? 'none' : 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
+    transform: `translate(${item.x}px, ${item.y + hoverOffset}px)`,
+    transition: 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
     zIndex: hoveredIndex.value === index ? 10 : 1
   }
 }
 
-// Mouse move handler for custom cursor
-function handleMouseMove(e) {
-  cursorX.value = e.clientX
-  cursorY.value = e.clientY
-  
-  // Show cursor when over the grid area
-  if (gridContainer.value) {
-    const rect = gridContainer.value.getBoundingClientRect()
-    const isOverGrid = e.clientX >= rect.left && e.clientX <= rect.right &&
-                       e.clientY >= rect.top && e.clientY <= rect.bottom
-    showCursor.value = isOverGrid
-  } else {
-    showCursor.value = true
-  }
-}
-
-function handleMouseLeave() {
-  showCursor.value = false
-}
-
-// Animation loop for smooth card following with inertia
-function animateCards() {
-  if (!isDragging.value || !gridContainer.value) {
-    animationFrameId.value = null
-    return
-  }
-  
-  // Update each card offset with individual physics (like driving)
-  gridItems.value.forEach((item, index) => {
-    if (!initialPositions.value[index] || !cardOffsets.value[index]) return
-    
-    const speed = item.speed || 0.1
-    const damping = 0.90 // friction/inertia - lower = more inertia
-    
-    // Apply mouse delta to card offset with individual speed (each card moves at different rate)
-    cardOffsets.value[index].x += mouseDelta.value.x * speed
-    cardOffsets.value[index].y += mouseDelta.value.y * speed
-    
-    // Apply damping for smooth deceleration (creates the "driving" effect)
-    cardOffsets.value[index].x *= damping
-    cardOffsets.value[index].y *= damping
-  })
-  
-  // Reset delta after all cards have processed it
-  mouseDelta.value = { x: 0, y: 0 }
-  
-  animationFrameId.value = requestAnimationFrame(animateCards)
-}
-
-// Drag functionality
-function startDrag(e) {
-  if (!gridContainer.value) return
-  e.preventDefault()
-  isDragging.value = true
-  
-  lastMousePos.value = {
-    x: e.clientX,
-    y: e.clientY
-  }
-  
-  mouseDelta.value = { x: 0, y: 0 }
-  
-  gridContainer.value.style.cursor = 'grabbing'
-  document.body.style.userSelect = 'none'
-  
-  // Start animation loop
-  if (!animationFrameId.value) {
-    animateCards()
-  }
-}
-
-function onDrag(e) {
-  if (!isDragging.value) return
-  e.preventDefault()
-  
-  // Calculate mouse movement delta
-  mouseDelta.value = {
-    x: e.clientX - lastMousePos.value.x,
-    y: e.clientY - lastMousePos.value.y
-  }
-  
-  // Update last position
-  lastMousePos.value = {
-    x: e.clientX,
-    y: e.clientY
-  }
-}
-
-function stopDrag() {
-  if (isDragging.value) {
-    isDragging.value = false
-    if (gridContainer.value) {
-      gridContainer.value.style.cursor = 'grab'
-    }
-    document.body.style.userSelect = ''
-    
-    // Save final positions by updating initial positions with offsets
-    gridItems.value.forEach((item, index) => {
-      if (initialPositions.value[index] && cardOffsets.value[index]) {
-        initialPositions.value[index] = {
-          x: initialPositions.value[index].x + cardOffsets.value[index].x,
-          y: initialPositions.value[index].y + cardOffsets.value[index].y
-        }
-        // Reset offsets
-        cardOffsets.value[index] = { x: 0, y: 0 }
-        // Update item position
-        item.x = initialPositions.value[index].x
-        item.y = initialPositions.value[index].y
-      }
-    })
-    
-    // Stop animation loop
-    if (animationFrameId.value) {
-      cancelAnimationFrame(animationFrameId.value)
-      animationFrameId.value = null
-    }
-  }
-}
 
 function handleItemHover(index) {
   hoveredIndex.value = index
@@ -366,23 +222,7 @@ function handleItemLeave() {
   hoveredIndex.value = -1
 }
 
-// Scroll animations
-let scrollY = 0
-function handleScroll() {
-  scrollY = window.scrollY
-  if (gridContainer.value) {
-    const opacity = Math.max(0.3, 1 - scrollY / 800)
-    gridContainer.value.style.opacity = opacity
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll, { passive: true })
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
+// Removed scroll-based opacity reduction for normal visibility
 </script>
 
 <style scoped>
@@ -395,18 +235,7 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 1s ease-out, transform 1s ease-out;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
   padding: 20px 0;
-}
-
-.grid-container.is-dragging {
-  cursor: grabbing !important;
-}
-
-.grid-container:active {
-  cursor: grabbing;
 }
 
 .grid-item {
@@ -448,10 +277,13 @@ onUnmounted(() => {
 }
 
 .item-icon {
-  font-size: 48px;
   margin-bottom: 24px;
   transition: transform 0.3s ease;
   line-height: 1;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .grid-item:hover .item-icon {
@@ -474,48 +306,6 @@ onUnmounted(() => {
   line-height: 1.5;
 }
 
-/* Custom Drag Cursor */
-.cursor-area {
-  cursor: none;
-}
-
-.custom-cursor {
-  position: fixed;
-  width: 70px;
-  height: 70px;
-  border: 2px solid #000;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.custom-cursor.is-dragging {
-  transform: translate(-50%, -50%) scale(1.15);
-  border-width: 3px;
-  background: rgba(255, 255, 255, 1);
-}
-
-.cursor-text {
-  font-size: 11px;
-  font-weight: 600;
-  color: #000;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-family: 'Inter', sans-serif;
-}
-
-.cursor-area button,
-.cursor-area a {
-  cursor: pointer;
-}
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
@@ -544,12 +334,7 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: center;
     gap: 20px;
-    cursor: default;
     min-height: auto;
-  }
-  
-  .custom-cursor {
-    display: none;
   }
   
   .item-content {

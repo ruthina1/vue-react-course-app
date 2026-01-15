@@ -40,7 +40,7 @@
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     ]"
                   >
-                    <span v-if="item.isPractice" class="mr-1">🛠️</span>
+                    <Wrench v-if="item.isPractice" :size="16" class="inline-block mr-1" />
                     {{ item.text }}
                   </router-link>
                 </li>
@@ -52,44 +52,71 @@
 
       <!-- Main Content -->
       <main class="flex-1 lg:ml-80 p-8 max-w-4xl mx-auto w-full">
-        <div v-if="currentLesson" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[500px]">
+        <div v-if="isLoading" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[500px] flex items-center justify-center">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading lesson...</p>
+          </div>
+        </div>
+        
+        <div v-else-if="currentLesson" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[500px]">
           <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ currentLesson.text }}</h1>
             <div class="flex items-center space-x-4 text-sm text-gray-500">
               <span v-if="currentLesson.isPractice" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
                 Practice Task
               </span>
-              <span>time to read: 5 min</span>
+              <span v-if="currentLesson.estimatedTime">
+                Time to read: {{ currentLesson.estimatedTime }} min
+              </span>
+              <span v-else>Time to read: 5 min</span>
             </div>
           </div>
           
           <div class="prose prose-lg max-w-none text-gray-600">
-            <p>
-              This is the content for the lesson <strong>{{ currentLesson.text }}</strong>.
-            </p>
-            <p class="mt-4">
-              In a real application, this content would be fetched from a database or a markdown file.
-              For now, we are displaying this placeholder text.
-            </p>
+            <div v-if="currentLesson.content" v-html="formatContent(currentLesson.content)"></div>
+            <div v-else>
+              <p>
+                This is the content for the lesson <strong>{{ currentLesson.text }}</strong>.
+              </p>
+              <p class="mt-4">
+                Detailed content will be available soon. Check back later for updates.
+              </p>
+            </div>
             
-            <div class="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-100">
-              <h3 class="text-blue-900 font-bold text-lg mb-2">Key Takeaways</h3>
+            <div v-if="currentLesson.children && currentLesson.children.length > 0" class="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-100">
+              <h3 class="text-blue-900 font-bold text-lg mb-2">Topics Covered</h3>
               <ul class="list-disc list-inside text-blue-800 space-y-1">
-                <li>Concept 1 related to {{ currentLesson.text }}</li>
-                <li>Concept 2 related to {{ currentLesson.text }}</li>
-                <li>Practical application example</li>
+                <li v-for="(child, index) in currentLesson.children" :key="index">{{ child.title || child }}</li>
               </ul>
             </div>
           </div>
           
           <!-- Navigation Buttons -->
           <div class="mt-12 flex justify-between pt-8 border-t border-gray-100">
-            <button class="text-gray-500 hover:text-black font-medium">
-              &larr; Previous Lesson
+            <button 
+              v-if="navigation.previous"
+              @click="goToLesson(navigation.previous)"
+              class="text-gray-500 hover:text-black font-medium flex items-center transition-colors"
+            >
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              Previous Lesson
             </button>
-            <button class="btn-primary">
-              Next Lesson &rarr;
+            <span v-else class="text-gray-300">No previous lesson</span>
+            
+            <button 
+              v-if="navigation.next"
+              @click="goToLesson(navigation.next)"
+              class="btn-primary flex items-center"
+            >
+              Next Lesson
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
             </button>
+            <span v-else class="text-gray-300">No next lesson</span>
           </div>
         </div>
         
@@ -106,23 +133,167 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useCourseData } from '../composables/useCourseData'
 import Navigation from '../components/Navigation.vue'
+import { Wrench } from 'lucide-vue-next'
 
 const route = useRoute()
-const { getModule, getLesson } = useCourseData()
+const router = useRouter()
+const { getModule, getLesson, getLessonNavigation } = useCourseData()
 
 const courseId = computed(() => route.params.courseId)
 const currentLessonId = computed(() => route.params.lessonId)
+const currentLesson = ref(null)
+const isLoading = ref(false)
+const navigation = ref({ previous: null, next: null })
 
 const modules = computed(() => getModule(courseId.value))
-const currentLesson = computed(() => getLesson(courseId.value, currentLessonId.value))
 
 const courseTitle = computed(() => {
   return courseId.value === 'vue' ? 'Vue.js Mastery' : 'React Ecosystem'
 })
+
+// Load lesson content
+async function loadLesson() {
+  isLoading.value = true
+  try {
+    const lesson = await getLesson(courseId.value, currentLessonId.value)
+    currentLesson.value = lesson
+    
+    // Update navigation
+    const nav = getLessonNavigation(courseId.value, currentLessonId.value)
+    navigation.value = nav
+  } catch (error) {
+    console.error('Error loading lesson:', error)
+    currentLesson.value = null
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Navigate to lesson
+function goToLesson(lesson) {
+  if (lesson) {
+    router.push(`/${courseId.value}/lesson/${lesson.slug}`)
+  }
+}
+
+// Watch for route changes
+watch([courseId, currentLessonId], () => {
+  loadLesson()
+})
+
+onMounted(() => {
+  loadLesson()
+})
+
+// Format markdown-like content (enhanced implementation)
+const formatContent = (content) => {
+  if (!content) return ''
+  
+  // Escape HTML to prevent XSS
+  const escapeHtml = (text) => {
+    const div = document.createElement('div')
+    div.textContent = text
+    return div.innerHTML
+  }
+  
+  // Split by lines and process
+  const lines = content.split('\n')
+  let html = ''
+  let inCodeBlock = false
+  let codeBlockContent = ''
+  let codeBlockLang = ''
+  let currentParagraph = []
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    
+    // Code blocks
+    if (line.startsWith('```')) {
+      if (inCodeBlock) {
+        // End code block - flush any pending paragraph first
+        if (currentParagraph.length > 0) {
+          html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+          currentParagraph = []
+        }
+        
+        // Escape code content
+        const escapedCode = escapeHtml(codeBlockContent.trim())
+        html += `<pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4 font-mono text-sm"><code class="language-${codeBlockLang}">${escapedCode}</code></pre>`
+        codeBlockContent = ''
+        codeBlockLang = ''
+        inCodeBlock = false
+      } else {
+        // Start code block - flush any pending paragraph first
+        if (currentParagraph.length > 0) {
+          html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+          currentParagraph = []
+        }
+        
+        codeBlockLang = line.replace('```', '').trim()
+        inCodeBlock = true
+      }
+      continue
+    }
+    
+    if (inCodeBlock) {
+      codeBlockContent += line + '\n'
+      continue
+    }
+    
+    // Headers
+    if (line.startsWith('# ')) {
+      if (currentParagraph.length > 0) {
+        html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+        currentParagraph = []
+      }
+      html += `<h1 class="text-3xl font-bold mt-8 mb-4 text-gray-900">${escapeHtml(line.replace('# ', ''))}</h1>`
+    } else if (line.startsWith('## ')) {
+      if (currentParagraph.length > 0) {
+        html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+        currentParagraph = []
+      }
+      html += `<h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">${escapeHtml(line.replace('## ', ''))}</h2>`
+    } else if (line.startsWith('### ')) {
+      if (currentParagraph.length > 0) {
+        html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+        currentParagraph = []
+      }
+      html += `<h3 class="text-xl font-semibold mt-4 mb-2 text-gray-900">${escapeHtml(line.replace('### ', ''))}</h3>`
+    } else if (line.startsWith('#### ')) {
+      if (currentParagraph.length > 0) {
+        html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+        currentParagraph = []
+      }
+      html += `<h4 class="text-lg font-semibold mt-3 mb-2 text-gray-900">${escapeHtml(line.replace('#### ', ''))}</h4>`
+    } else if (line.trim() === '') {
+      // Empty line - flush paragraph
+      if (currentParagraph.length > 0) {
+        html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+        currentParagraph = []
+      }
+    } else {
+      // Regular paragraph with inline formatting
+      let para = line
+        .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em class="italic">$1</em>')
+        .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">$1</code>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
+      
+      currentParagraph.push(para)
+    }
+  }
+  
+  // Flush any remaining paragraph
+  if (currentParagraph.length > 0) {
+    html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+  }
+  
+  return html
+}
 
 // Helper if slug is missing in data (safety fallback)
 const generateSlug = (text) => {

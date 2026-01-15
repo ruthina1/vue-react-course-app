@@ -27,6 +27,10 @@ import JoinView from '../views/JoinView.vue'
 import VueView from '../views/VueView.vue'
 import ReactView from '../views/ReactView.vue'
 import LessonView from '../views/LessonView.vue'
+import PasswordRecoverView from '../views/PasswordRecoverView.vue'
+import ProfileView from '../views/ProfileView.vue'
+import ResourcesView from '../views/ResourcesView.vue'
+import ShowcaseView from '../views/ShowcaseView.vue'
 
 // Define all routes in your application
 const routes = [
@@ -46,6 +50,16 @@ const routes = [
     component: JoinView
   },
   {
+    path: '/password-recover',
+    name: 'password-recover',
+    component: PasswordRecoverView
+  },
+  {
+    path: '/en/password-recover',
+    name: 'password-recover-en',
+    component: PasswordRecoverView
+  },
+  {
     path: '/vue',
     name: 'vue',
     component: VueView,
@@ -62,6 +76,24 @@ const routes = [
     name: 'lesson',
     component: LessonView,
     props: true,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: ProfileView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/resources',
+    name: 'resources',
+    component: ResourcesView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/showcase',
+    name: 'showcase',
+    component: ShowcaseView,
     meta: { requiresAuth: true }
   }
 ]

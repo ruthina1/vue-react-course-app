@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 // Helper to slugify text
 const generateSlug = (text) => {
@@ -22,6 +22,22 @@ const transformModules = (modules) => {
     }))
 }
 
+// API Configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+
+// Fetch from API
+async function fetchFromAPI(endpoint) {
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`)
+        if (!response.ok) throw new Error('API request failed')
+        return await response.json()
+    } catch (error) {
+        console.warn(`API fetch failed for ${endpoint}, using fallback data:`, error.message)
+        return null
+    }
+}
+
+// Fallback course data (same as before)
 const vueModulesRaw = [
     {
         title: "Web Fundamentals (Prerequisite)",
@@ -324,7 +340,7 @@ const resourcesRaw = [
         title: 'Vue Components',
         description: 'Ready-to-use Vue components with detailed explanations. Learn by example.',
         category: 'Components',
-        icon: '⚡',
+        iconName: 'Zap',
         topics: ['vue'],
         link: 'https://vuejs.org/guide/essentials/component-basics.html'
     },
@@ -333,7 +349,7 @@ const resourcesRaw = [
         title: 'React Patterns',
         description: 'Modern React patterns and best practices. Hooks, Context, and more.',
         category: 'Patterns',
-        icon: '🎯',
+        iconName: 'Target',
         topics: ['react'],
         link: 'https://react.dev/learn'
     },
@@ -342,7 +358,7 @@ const resourcesRaw = [
         title: 'Interactive Lessons',
         description: 'Step-by-step tutorials with code examples. Build real projects.',
         category: 'Lessons',
-        icon: '📚',
+        iconName: 'BookOpen',
         topics: ['vue', 'react']
     },
     {
@@ -350,7 +366,7 @@ const resourcesRaw = [
         title: 'State Management',
         description: 'Learn Pinia (Vue) and Redux (React). Manage complex application state.',
         category: 'State',
-        icon: '🗄️',
+        iconName: 'Database',
         topics: ['vue', 'react'],
         link: 'https://pinia.vuejs.org/'
     },
@@ -359,7 +375,7 @@ const resourcesRaw = [
         title: 'Routing',
         description: 'Vue Router and React Router. Navigate between pages seamlessly.',
         category: 'Navigation',
-        icon: '🧭',
+        iconName: 'Compass',
         topics: ['vue', 'react'],
         link: 'https://router.vuejs.org/'
     },
@@ -368,7 +384,7 @@ const resourcesRaw = [
         title: 'Animations',
         description: 'Smooth transitions and animations. GSAP, Framer Motion, and CSS.',
         category: 'Animations',
-        icon: '✨',
+        iconName: 'Sparkles',
         topics: ['vue', 'react'],
         link: 'https://vuejs.org/guide/extras/animation.html'
     }
@@ -378,18 +394,121 @@ export function useCourseData() {
     const vueModules = ref(transformModules(vueModulesRaw))
     const reactModules = ref(transformModules(reactModulesRaw))
     const resources = ref(resourcesRaw)
+    const isLoading = ref(false)
+    const useAPI = ref(false)
+
+    // Try to fetch from API on mount
+    onMounted(async () => {
+        isLoading.value = true
+        try {
+            const apiModules = await fetchFromAPI('/courses/vue')
+            if (apiModules && apiModules.length > 0) {
+                // Transform API data to match our format
+                vueModules.value = apiModules.map(module => ({
+                    ...module,
+                    items: (module.items || []).map(item => ({
+                        text: item.text || item.title,
+                        slug: item.slug,
+                        content: item.content || null,
+                        isPractice: item.isPractice === true || item.isPractice === 1,
+                        estimatedTime: item.estimatedTime || 5,
+                        children: item.children || []
+                    }))
+                }))
+                useAPI.value = true
+                console.log('✅ Using API data for Vue modules')
+            } else {
+                vueModules.value = transformModules(vueModulesRaw)
+            }
+        } catch (error) {
+            console.log('Using fallback data for Vue modules')
+        }
+        
+        try {
+            const apiModules = await fetchFromAPI('/courses/react')
+            if (apiModules && apiModules.length > 0) {
+                reactModules.value = apiModules.map(module => ({
+                    ...module,
+                    items: (module.items || []).map(item => ({
+                        text: item.text || item.title,
+                        slug: item.slug,
+                        content: item.content || null,
+                        isPractice: item.isPractice === true || item.isPractice === 1,
+                        estimatedTime: item.estimatedTime || 5,
+                        children: item.children || []
+                    }))
+                }))
+                console.log('✅ Using API data for React modules')
+            } else {
+                reactModules.value = transformModules(reactModulesRaw)
+            }
+        } catch (error) {
+            console.log('Using fallback data for React modules')
+        }
+        
+        isLoading.value = false
+    })
 
     const getModule = (courseId) => {
         return courseId === 'vue' ? vueModules.value : reactModules.value
     }
 
-    const getLesson = (courseId, lessonId) => {
+    const getLesson = async (courseId, lessonId) => {
+        // Always try API first
+        try {
+            const apiLesson = await fetchFromAPI(`/courses/${courseId}/lesson/${lessonId}`)
+            if (apiLesson && apiLesson.content) {
+                // API returned content, use it
+                return {
+                    text: apiLesson.text || apiLesson.title,
+                    slug: apiLesson.slug,
+                    content: apiLesson.content,
+                    isPractice: apiLesson.isPractice || false,
+                    estimatedTime: apiLesson.estimatedTime || 5,
+                    children: apiLesson.children || []
+                }
+            }
+        } catch (error) {
+            console.warn('API lesson fetch failed, using fallback:', error.message)
+        }
+        
+        // Fallback to local data
         const modules = getModule(courseId)
         for (const module of modules) {
             const item = module.items.find(i => i.slug === lessonId)
             if (item) return item
         }
         return null
+    }
+
+    // Get all lessons in order for navigation
+    const getAllLessons = (courseId) => {
+        const modules = getModule(courseId)
+        const lessons = []
+        modules.forEach(module => {
+            module.items.forEach(item => {
+                lessons.push({
+                    ...item,
+                    moduleTitle: module.title
+                })
+            })
+        })
+        return lessons
+    }
+
+    // Get next and previous lesson
+    const getLessonNavigation = (courseId, currentLessonSlug) => {
+        const lessons = getAllLessons(courseId)
+        const currentIndex = lessons.findIndex(l => l.slug === currentLessonSlug)
+        
+        if (currentIndex === -1) {
+            return { previous: null, next: null }
+        }
+        
+        return {
+            previous: currentIndex > 0 ? lessons[currentIndex - 1] : null,
+            next: currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null
+        }
     }
 
     const getResources = (topic = 'all') => {
@@ -401,8 +520,12 @@ export function useCourseData() {
         vueModules,
         reactModules,
         resources,
+        isLoading,
+        useAPI,
         getModule,
         getLesson,
-        getResources
+        getResources,
+        getAllLessons,
+        getLessonNavigation
     }
 }
