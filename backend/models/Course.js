@@ -47,7 +47,7 @@ export class Course {
       [course.id]
     );
     
-    // Transform the data to match frontend format
+    // here Transform the data to match frontend format
     return modules.map(module => {
       // `module.items` comes from JSON_ARRAYAGG and may be returned as a JSON string (or null). Safely parse it to an array.
       let itemsArr = [];
@@ -58,6 +58,7 @@ export class Course {
           itemsArr = Array.isArray(module.items) ? module.items : [];
         }
       }
+
 
       const cleanItems = (itemsArr || []).filter(item => item && item.id !== null).map(item => ({
         id: item.id,
@@ -79,6 +80,7 @@ export class Course {
     });
   }
   
+  // Getting lessons
   static async getLesson(courseId, lessonSlug) {
     const course = await this.findByCourseId(courseId);
     if (!course) return null;
