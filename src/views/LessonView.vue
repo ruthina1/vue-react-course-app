@@ -61,7 +61,8 @@
         
         <div v-else-if="currentLesson" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[500px]">
           <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ currentLesson.text }}</h1>
+            <!-- Title removed to avoid duplication if it exists in content, checking content first -->
+            <h1 v-if="!currentLesson.content || !currentLesson.content.includes('# ')" class="text-3xl font-bold text-gray-900 mb-4">{{ currentLesson.text }}</h1>
             <div class="flex items-center space-x-4 text-sm text-gray-500">
               <span v-if="currentLesson.isPractice" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
                 Practice Task
@@ -118,6 +119,23 @@
             </button>
             <span v-else class="text-gray-300">No next lesson</span>
           </div>
+
+          <!-- Mark Complete Section -->
+          <div class="mt-8 pt-8 border-t border-gray-100 text-center">
+            <button 
+              @click="toggleComplete"
+              class="px-6 py-3 rounded-lg font-medium transition-all transform active:scale-95"
+              :class="isCompleted ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+            >
+              <span v-if="isCompleted" class="flex items-center justify-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Lesson Completed
+              </span>
+              <span v-else>Mark as Completed</span>
+            </button>
+          </div>
+          
+          <!-- End of Main Content -->
         </div>
         
         <div v-else class="text-center py-20">
@@ -141,13 +159,14 @@ import { Wrench } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
-const { getModule, getLesson, getLessonNavigation } = useCourseData()
+const { getModule, getLesson, getLessonNavigation, toggleLessonComplete, isLessonComplete } = useCourseData()
 
 const courseId = computed(() => route.params.courseId)
 const currentLessonId = computed(() => route.params.lessonId)
 const currentLesson = ref(null)
 const isLoading = ref(false)
 const navigation = ref({ previous: null, next: null })
+const isCompleted = ref(false)
 
 const modules = computed(() => getModule(courseId.value))
 
@@ -165,6 +184,12 @@ async function loadLesson() {
     // Update navigation
     const nav = getLessonNavigation(courseId.value, currentLessonId.value)
     navigation.value = nav
+    
+    // Update completion status
+    isCompleted.value = isLessonComplete(currentLessonId.value)
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (error) {
     console.error('Error loading lesson:', error)
     currentLesson.value = null
@@ -177,6 +202,14 @@ async function loadLesson() {
 function goToLesson(lesson) {
   if (lesson) {
     router.push(`/${courseId.value}/lesson/${lesson.slug}`)
+  }
+}
+
+function toggleComplete() {
+  if (currentLessonId.value) {
+    toggleLessonComplete(currentLessonId.value)
+    isCompleted.value = !isCompleted.value
+    // Optional: Trigger confetti or feedback
   }
 }
 
@@ -199,6 +232,15 @@ const formatContent = (content) => {
     div.textContent = text
     return div.innerHTML
   }
+
+  // Format inline markdown
+  const formatInline = (text) => {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em class="italic">$1</em>')
+      .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
+  }
   
   // Split by lines and process
   const lines = content.split('\n')
@@ -207,6 +249,7 @@ const formatContent = (content) => {
   let codeBlockContent = ''
   let codeBlockLang = ''
   let currentParagraph = []
+  let listType = null // 'ul' or 'ol'
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
@@ -214,23 +257,26 @@ const formatContent = (content) => {
     // Code blocks
     if (line.startsWith('```')) {
       if (inCodeBlock) {
-        // End code block - flush any pending paragraph first
+        // End code block
         if (currentParagraph.length > 0) {
           html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
           currentParagraph = []
         }
         
-        // Escape code content
         const escapedCode = escapeHtml(codeBlockContent.trim())
         html += `<pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4 font-mono text-sm"><code class="language-${codeBlockLang}">${escapedCode}</code></pre>`
         codeBlockContent = ''
         codeBlockLang = ''
         inCodeBlock = false
       } else {
-        // Start code block - flush any pending paragraph first
+        // Start code block
         if (currentParagraph.length > 0) {
           html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
           currentParagraph = []
+        }
+        if (listType) { // Close list if starting code block
+            html += `</${listType}>`
+            listType = null
         }
         
         codeBlockLang = line.replace('```', '').trim()
@@ -245,49 +291,85 @@ const formatContent = (content) => {
     }
     
     // Headers
-    if (line.startsWith('# ')) {
+    if (line.startsWith('#')) {
       if (currentParagraph.length > 0) {
         html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
         currentParagraph = []
       }
-      html += `<h1 class="text-3xl font-bold mt-8 mb-4 text-gray-900">${escapeHtml(line.replace('# ', ''))}</h1>`
-    } else if (line.startsWith('## ')) {
+      if (listType) {
+        html += `</${listType}>`
+        listType = null
+      }
+
+      if (line.startsWith('# ')) {
+         // Skip h1 as it's handled by page title
+         // html += `<h1 class="text-3xl font-bold mt-8 mb-4 text-gray-900">${escapeHtml(line.replace('# ', ''))}</h1>`
+      } else if (line.startsWith('## ')) {
+         html += `<h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">${escapeHtml(line.replace('## ', ''))}</h2>`
+      } else if (line.startsWith('### ')) {
+         html += `<h3 class="text-xl font-semibold mt-4 mb-2 text-gray-900">${escapeHtml(line.replace('### ', ''))}</h3>`
+      } else if (line.startsWith('#### ')) {
+         html += `<h4 class="text-lg font-semibold mt-3 mb-2 text-gray-900">${escapeHtml(line.replace('#### ', ''))}</h4>`
+      }
+      continue
+    }
+
+    // List Items
+    const isUl = line.trim().startsWith('- ') || line.trim().startsWith('* ')
+    const isOl = /^\d+\.\s/.test(line.trim())
+
+    if (isUl || isOl) {
+        // Flush paragraph
+        if (currentParagraph.length > 0) {
+            html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
+            currentParagraph = []
+        }
+
+        const newListType = isUl ? 'ul' : 'ol'
+
+        // Switch list type or start new
+        if (listType !== newListType) {
+            if (listType) html += `</${listType}>`
+            
+            const listClass = isUl ? 'list-disc' : 'list-decimal'
+            html += `<${newListType} class="${listClass} list-inside mb-4 ml-4 space-y-1 text-gray-700">`
+            listType = newListType
+        }
+
+        const content = isUl 
+            ? line.trim().substring(2).trim()
+            : line.trim().replace(/^\d+\.\s/, '').trim()
+            
+        html += `<li class="leading-relaxed">${formatInline(escapeHtml(content))}</li>`
+        continue
+    }
+
+    // Empty line
+    if (line.trim() === '') {
       if (currentParagraph.length > 0) {
         html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
         currentParagraph = []
       }
-      html += `<h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">${escapeHtml(line.replace('## ', ''))}</h2>`
-    } else if (line.startsWith('### ')) {
-      if (currentParagraph.length > 0) {
-        html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
-        currentParagraph = []
-      }
-      html += `<h3 class="text-xl font-semibold mt-4 mb-2 text-gray-900">${escapeHtml(line.replace('### ', ''))}</h3>`
-    } else if (line.startsWith('#### ')) {
-      if (currentParagraph.length > 0) {
-        html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
-        currentParagraph = []
-      }
-      html += `<h4 class="text-lg font-semibold mt-3 mb-2 text-gray-900">${escapeHtml(line.replace('#### ', ''))}</h4>`
-    } else if (line.trim() === '') {
-      // Empty line - flush paragraph
-      if (currentParagraph.length > 0) {
-        html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
-        currentParagraph = []
+      if (listType) {
+        html += `</${listType}>`
+        listType = null
       }
     } else {
-      // Regular paragraph with inline formatting
-      let para = line
-        .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em class="italic">$1</em>')
-        .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">$1</code>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
-      
-      currentParagraph.push(para)
+      // Regular paragraph line
+      if (listType) {
+         // Close list if we run into text that isn't a list item
+         // (Assuming simplified markdown where list items are contiguous)
+         html += `</${listType}>`
+         listType = null
+      }
+      currentParagraph.push(formatInline(escapeHtml(line)))
     }
   }
   
-  // Flush any remaining paragraph
+  // Flush remaining
+  if (listType) {
+    html += `</${listType}>`
+  }
   if (currentParagraph.length > 0) {
     html += `<p class="mb-4 leading-relaxed">${currentParagraph.join(' ')}</p>`
   }

@@ -1,4 +1,5 @@
 import { ref, onMounted } from 'vue'
+import { vueLessons as vueContentData, reactLessons as reactContentData } from '../data/courseContent'
 
 // Helper to slugify text
 const generateSlug = (text) => {
@@ -11,14 +12,28 @@ const generateSlug = (text) => {
         .replace(/\-\-+/g, '-')   // Replace multiple - with single -
 }
 
-// Transform items to include slugs
-const transformModules = (modules) => {
+// Find content helper
+const findContent = (slug, contentData) => {
+    if (!contentData) return null
+    for (const module of contentData) {
+        const lesson = module.lessons.find(l => l.slug === slug)
+        if (lesson) return lesson.content
+    }
+    return null
+}
+
+// Transform items to include slugs and content
+const transformModules = (modules, contentData) => {
     return modules.map(module => ({
         ...module,
-        items: module.items.map(item => ({
-            ...item,
-            slug: generateSlug(item.text)
-        }))
+        items: module.items.map(item => {
+            const slug = generateSlug(item.text)
+            return {
+                ...item,
+                slug,
+                content: findContent(slug, contentData)
+            }
+        })
     }))
 }
 
@@ -391,14 +406,42 @@ const resourcesRaw = [
 ]
 
 export function useCourseData() {
-    const vueModules = ref(transformModules(vueModulesRaw))
-    const reactModules = ref(transformModules(reactModulesRaw))
+    const vueModules = ref(transformModules(vueModulesRaw, vueContentData))
+    const reactModules = ref(transformModules(reactModulesRaw, reactContentData))
     const resources = ref(resourcesRaw)
     const isLoading = ref(false)
     const useAPI = ref(false)
 
+    const completedLessons = ref(new Set())
+
+    // Initialize completed lessons from localStorage
+    const initCompletedLessons = () => {
+        try {
+            const saved = localStorage.getItem('completedLessons')
+            if (saved) {
+                completedLessons.value = new Set(JSON.parse(saved))
+            }
+        } catch (e) {
+            console.error('Error loading completion status', e)
+        }
+    }
+
+    // Toggle lesson completion
+    const toggleLessonComplete = (slug) => {
+        if (completedLessons.value.has(slug)) {
+            completedLessons.value.delete(slug)
+        } else {
+            completedLessons.value.add(slug)
+        }
+        localStorage.setItem('completedLessons', JSON.stringify([...completedLessons.value]))
+    }
+
+    // Check if lesson is complete
+    const isLessonComplete = (slug) => completedLessons.value.has(slug)
+
     // Try to fetch from API on mount
     onMounted(async () => {
+        initCompletedLessons()
         isLoading.value = true
         try {
             const apiModules = await fetchFromAPI('/courses/vue')
@@ -412,18 +455,22 @@ export function useCourseData() {
                         content: item.content || null,
                         isPractice: item.isPractice === true || item.isPractice === 1,
                         estimatedTime: item.estimatedTime || 5,
-                        children: item.children || []
+                        children: item.children || [],
+                        completed: isLessonComplete(item.slug)
                     }))
                 }))
                 useAPI.value = true
                 console.log('✅ Using API data for Vue modules')
             } else {
-                vueModules.value = transformModules(vueModulesRaw)
+                vueModules.value = transformModules(vueModulesRaw, vueContentData).map(m => ({
+                    ...m,
+                    items: m.items.map(i => ({ ...i, completed: isLessonComplete(i.slug) }))
+                }))
             }
         } catch (error) {
             console.log('Using fallback data for Vue modules')
         }
-        
+
         try {
             const apiModules = await fetchFromAPI('/courses/react')
             if (apiModules && apiModules.length > 0) {
@@ -435,17 +482,21 @@ export function useCourseData() {
                         content: item.content || null,
                         isPractice: item.isPractice === true || item.isPractice === 1,
                         estimatedTime: item.estimatedTime || 5,
-                        children: item.children || []
+                        children: item.children || [],
+                        completed: isLessonComplete(item.slug)
                     }))
                 }))
                 console.log('✅ Using API data for React modules')
             } else {
-                reactModules.value = transformModules(reactModulesRaw)
+                reactModules.value = transformModules(reactModulesRaw, reactContentData).map(m => ({
+                    ...m,
+                    items: m.items.map(i => ({ ...i, completed: isLessonComplete(i.slug) }))
+                }))
             }
         } catch (error) {
             console.log('Using fallback data for React modules')
         }
-        
+
         isLoading.value = false
     })
 
@@ -471,7 +522,7 @@ export function useCourseData() {
         } catch (error) {
             console.warn('API lesson fetch failed, using fallback:', error.message)
         }
-        
+
         // Fallback to local data
         const modules = getModule(courseId)
         for (const module of modules) {
@@ -500,11 +551,11 @@ export function useCourseData() {
     const getLessonNavigation = (courseId, currentLessonSlug) => {
         const lessons = getAllLessons(courseId)
         const currentIndex = lessons.findIndex(l => l.slug === currentLessonSlug)
-        
+
         if (currentIndex === -1) {
             return { previous: null, next: null }
         }
-        
+
         return {
             previous: currentIndex > 0 ? lessons[currentIndex - 1] : null,
             next: currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null
@@ -526,6 +577,8 @@ export function useCourseData() {
         getLesson,
         getResources,
         getAllLessons,
-        getLessonNavigation
+        getLessonNavigation,
+        toggleLessonComplete,
+        isLessonComplete
     }
 }

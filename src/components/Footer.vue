@@ -37,10 +37,8 @@
         <div>
           <h4 class="font-semibold mb-4">Community</h4>
           <ul class="space-y-2 text-gray-400">
-            <li><a href="#" class="hover:text-white transition-colors">Discord</a></li>
-            <li><a href="#" class="hover:text-white transition-colors">GitHub</a></li>
+            <li><a href="https://github.com/ruthina1" target="_blank" class="hover:text-white transition-colors">GitHub</a></li>
             <li><a href="#" class="hover:text-white transition-colors">Twitter</a></li>
-            <li><a href="#" class="hover:text-white transition-colors">Blog</a></li>
           </ul>
         </div>
 
