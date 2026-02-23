@@ -27,7 +27,8 @@ export class Course {
     );
 
     // Get lessons for each module
-    const result = [];
+    const resultMap = new Map(); // key -> title, value -> module object (merged)
+    const order = [];
     for (const module of modules) {
       const [lessons] = await pool.execute(
         `SELECT * FROM lessons WHERE module_id = ? ORDER BY order_index`,
@@ -53,16 +54,28 @@ export class Course {
         });
       }
 
-      result.push({
-        id: module.id,
-        title: module.title,
-        description: module.description,
-        orderIndex: module.order_index,
-        items: items
-      });
+      // Merge modules with the same title (protect against duplicate module rows)
+      const key = module.title || String(module.id);
+      if (resultMap.has(key)) {
+        const existing = resultMap.get(key);
+        existing.items = existing.items.concat(items);
+        if (!existing.orderIndex && module.order_index) existing.orderIndex = module.order_index;
+      } else {
+        const entry = {
+          id: module.id,
+          title: module.title,
+          description: module.description,
+          orderIndex: module.order_index,
+          items: items
+        };
+        resultMap.set(key, entry);
+        order.push(key);
+      }
     }
 
-    return result;
+    // Preserve original order of first occurrences
+    const merged = order.map(k => resultMap.get(k));
+    return merged;
   }
 
   // Getting lessons
