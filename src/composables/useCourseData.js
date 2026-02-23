@@ -1,5 +1,4 @@
 import { ref, onMounted } from 'vue'
-import { vueLessons as vueContentData, reactLessons as reactContentData } from '../data/courseContent'
 
 // Helper to slugify text
 const generateSlug = (text) => {
@@ -12,28 +11,14 @@ const generateSlug = (text) => {
         .replace(/\-\-+/g, '-')   // Replace multiple - with single -
 }
 
-// Find content helper
-const findContent = (slug, contentData) => {
-    if (!contentData) return null
-    for (const module of contentData) {
-        const lesson = module.lessons.find(l => l.slug === slug)
-        if (lesson) return lesson.content
-    }
-    return null
-}
-
-// Transform items to include slugs and content
-const transformModules = (modules, contentData) => {
+// Transform items to include slugs
+const transformModules = (modules) => {
     return modules.map(module => ({
         ...module,
-        items: module.items.map(item => {
-            const slug = generateSlug(item.text)
-            return {
-                ...item,
-                slug,
-                content: findContent(slug, contentData)
-            }
-        })
+        items: module.items.map(item => ({
+            ...item,
+            slug: generateSlug(item.text)
+        }))
     }))
 }
 
@@ -406,66 +391,33 @@ const resourcesRaw = [
 ]
 
 export function useCourseData() {
-    const vueModules = ref(transformModules(vueModulesRaw, vueContentData))
-    const reactModules = ref(transformModules(reactModulesRaw, reactContentData))
+    const vueModules = ref(transformModules(vueModulesRaw))
+    const reactModules = ref(transformModules(reactModulesRaw))
     const resources = ref(resourcesRaw)
     const isLoading = ref(false)
     const useAPI = ref(false)
 
-    const completedLessons = ref(new Set())
-
-    // Initialize completed lessons from localStorage
-    const initCompletedLessons = () => {
-        try {
-            const saved = localStorage.getItem('completedLessons')
-            if (saved) {
-                completedLessons.value = new Set(JSON.parse(saved))
-            }
-        } catch (e) {
-            console.error('Error loading completion status', e)
-        }
-    }
-
-    // Toggle lesson completion
-    const toggleLessonComplete = (slug) => {
-        if (completedLessons.value.has(slug)) {
-            completedLessons.value.delete(slug)
-        } else {
-            completedLessons.value.add(slug)
-        }
-        localStorage.setItem('completedLessons', JSON.stringify([...completedLessons.value]))
-    }
-
-    // Check if lesson is complete
-    const isLessonComplete = (slug) => completedLessons.value.has(slug)
-
     // Try to fetch from API on mount
     onMounted(async () => {
-        initCompletedLessons()
         isLoading.value = true
         try {
             const apiModules = await fetchFromAPI('/courses/vue')
             if (apiModules && apiModules.length > 0) {
                 // Transform API data to match our format
+                // Backend already returns 'text' field, so just use the data directly
                 vueModules.value = apiModules.map(module => ({
                     ...module,
                     items: (module.items || []).map(item => ({
                         text: item.text || item.title,
                         slug: item.slug,
-                        content: item.content || null,
-                        isPractice: item.isPractice === true || item.isPractice === 1,
-                        estimatedTime: item.estimatedTime || 5,
-                        children: item.children || [],
-                        completed: isLessonComplete(item.slug)
+                        content: item.content,
+                        isPractice: item.isPractice,
+                        estimatedTime: item.estimatedTime,
+                        children: item.children || []
                     }))
                 }))
                 useAPI.value = true
                 console.log('✅ Using API data for Vue modules')
-            } else {
-                vueModules.value = transformModules(vueModulesRaw, vueContentData).map(m => ({
-                    ...m,
-                    items: m.items.map(i => ({ ...i, completed: isLessonComplete(i.slug) }))
-                }))
             }
         } catch (error) {
             console.log('Using fallback data for Vue modules')
@@ -479,19 +431,13 @@ export function useCourseData() {
                     items: (module.items || []).map(item => ({
                         text: item.text || item.title,
                         slug: item.slug,
-                        content: item.content || null,
-                        isPractice: item.isPractice === true || item.isPractice === 1,
-                        estimatedTime: item.estimatedTime || 5,
-                        children: item.children || [],
-                        completed: isLessonComplete(item.slug)
+                        content: item.content,
+                        isPractice: item.isPractice,
+                        estimatedTime: item.estimatedTime,
+                        children: item.children || []
                     }))
                 }))
                 console.log('✅ Using API data for React modules')
-            } else {
-                reactModules.value = transformModules(reactModulesRaw, reactContentData).map(m => ({
-                    ...m,
-                    items: m.items.map(i => ({ ...i, completed: isLessonComplete(i.slug) }))
-                }))
             }
         } catch (error) {
             console.log('Using fallback data for React modules')
@@ -505,22 +451,23 @@ export function useCourseData() {
     }
 
     const getLesson = async (courseId, lessonId) => {
-        // Always try API first
-        try {
-            const apiLesson = await fetchFromAPI(`/courses/${courseId}/lesson/${lessonId}`)
-            if (apiLesson && apiLesson.content) {
-                // API returned content, use it
-                return {
-                    text: apiLesson.text || apiLesson.title,
-                    slug: apiLesson.slug,
-                    content: apiLesson.content,
-                    isPractice: apiLesson.isPractice || false,
-                    estimatedTime: apiLesson.estimatedTime || 5,
-                    children: apiLesson.children || []
+        // Try API first if enabled
+        if (useAPI.value) {
+            try {
+                const apiLesson = await fetchFromAPI(`/courses/${courseId}/lesson/${lessonId}`)
+                if (apiLesson) {
+                    return {
+                        text: apiLesson.text || apiLesson.title,
+                        slug: apiLesson.slug,
+                        content: apiLesson.content,
+                        isPractice: apiLesson.isPractice,
+                        estimatedTime: apiLesson.estimatedTime,
+                        children: apiLesson.children || []
+                    }
                 }
+            } catch (error) {
+                console.warn('API lesson fetch failed, using fallback')
             }
-        } catch (error) {
-            console.warn('API lesson fetch failed, using fallback:', error.message)
         }
 
         // Fallback to local data
@@ -577,8 +524,6 @@ export function useCourseData() {
         getLesson,
         getResources,
         getAllLessons,
-        getLessonNavigation,
-        toggleLessonComplete,
-        isLessonComplete
+        getLessonNavigation
     }
 }
