@@ -92,31 +92,35 @@
             </div>
           </div>
           
-          <!-- Navigation Buttons -->
-          <div class="mt-12 flex justify-between pt-8 border-t border-gray-100">
-            <button 
-              v-if="navigation.previous"
-              @click="goToLesson(navigation.previous)"
-              class="text-gray-500 hover:text-black font-medium flex items-center transition-colors"
-            >
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-              Previous Lesson
-            </button>
-            <span v-else class="text-gray-300">No previous lesson</span>
-            
-            <button 
-              v-if="navigation.next"
-              @click="goToLesson(navigation.next)"
-              class="btn-primary flex items-center"
-            >
-              Next Lesson
-              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <span v-else class="text-gray-300">No next lesson</span>
+          <!-- Navigation Buttons (responsive) -->
+          <div class="mt-12 flex flex-col sm:flex-row sm:justify-between gap-3 pt-8 border-t border-gray-100">
+            <div class="w-full sm:w-auto flex items-center">
+              <button 
+                v-if="navigation.previous"
+                @click="goToLesson(navigation.previous)"
+                class="w-full sm:w-auto text-gray-600 hover:text-black font-medium flex items-center justify-center sm:justify-start transition-colors py-3 px-4 rounded-md border border-gray-200 bg-white"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Previous Lesson
+              </button>
+              <span v-else class="text-gray-400 w-full text-center sm:text-left">No previous lesson</span>
+            </div>
+
+            <div class="w-full sm:w-auto flex items-center justify-center sm:justify-end">
+              <button 
+                v-if="navigation.next"
+                @click="goToLesson(navigation.next)"
+                class="btn-primary w-full sm:w-auto flex items-center justify-center py-3 px-6"
+              >
+                Next Lesson
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <span v-else class="text-gray-400 w-full text-center sm:text-right">No next lesson</span>
+            </div>
           </div>
         </div>
         
@@ -176,7 +180,10 @@ async function loadLesson() {
 // Navigate to lesson
 function goToLesson(lesson) {
   if (lesson) {
-    router.push(`/${courseId.value}/lesson/${lesson.slug}`)
+    router.push(`/${courseId.value}/lesson/${lesson.slug}`).then(() => {
+      // ensure we are at top of new lesson view on mobile/desktop
+      try { window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }) } catch (e) { window.scrollTo(0,0) }
+    })
   }
 }
 

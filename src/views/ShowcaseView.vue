@@ -17,11 +17,14 @@
 
           <!-- Showcase Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div
-              v-for="project in projects"
-              :key="project.id"
-              class="group cursor-pointer"
-            >
+                    <div
+                      v-for="project in projects"
+                      :key="project.id"
+                      class="group cursor-pointer"
+                      @click="openProject(project)"
+                      role="button"
+                      :aria-label="`Open ${project.name}`"
+                    >
               <!-- Project Card -->
               <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200 hover:border-black transition-colors">
                 <!-- Project Screenshot Mockup -->
@@ -73,7 +76,7 @@
                     <div class="flex items-center space-x-2">
                       <span class="text-sm text-gray-500">{{ project.resourcesUsed }} Resources Used</span>
                     </div>
-                    <a href="#" class="text-black font-medium hover:underline">
+                    <a :href="project.url || '#'" target="_blank" rel="noopener noreferrer" class="text-black font-medium hover:underline">
                       View →
                     </a>
                   </div>
@@ -160,7 +163,7 @@ const projects = ref([
     resourcesUsed: 8,
     iconComponent: ShoppingCartIcon,
     type: 'web',
-    url: 'shop.example.com',
+    url: 'https://tinamart.com/',
     mockupClass: 'ecommerce-mockup',
     contentClass: 'bg-white',
     barWidths: ['80%', '60%', '75%']
@@ -172,7 +175,7 @@ const projects = ref([
     resourcesUsed: 12,
     iconComponent: ChartBarIcon,
     type: 'web',
-    url: 'dashboard.example.com',
+    url: 'https://www.geckoboard.com/dashboard-examples/',
     mockupClass: 'dashboard-mockup',
     contentClass: 'bg-gray-50',
     barWidths: ['90%', '70%', '85%', '65%']
@@ -184,7 +187,7 @@ const projects = ref([
     resourcesUsed: 5,
     iconComponent: DeviceMobileIcon,
     type: 'mobile',
-    url: '',
+    url: 'https://www.instagram.com/',
     mockupClass: 'mobile-mockup',
     contentClass: 'bg-white',
     barWidths: ['85%', '70%', '90%']
@@ -196,7 +199,7 @@ const projects = ref([
     resourcesUsed: 5,
     iconComponent: PaletteIcon,
     type: 'web',
-    url: 'https://vercel.com/ruth-gizat-zelelews-projects/final-port',
+    url: 'https://final-port-kappa.vercel.app/',
     mockupClass: 'portfolio-mockup',
     contentClass: 'bg-gradient-to-br from-purple-50 to-pink-50',
     barWidths: ['75%', '55%', '80%']
@@ -208,7 +211,7 @@ const projects = ref([
     resourcesUsed: 6,
     iconComponent: CheckCircleIcon,
     type: 'web',
-    url: 'tasks.example.com',
+    url: 'https://www.todoist.com/',
     mockupClass: 'task-mockup',
     contentClass: 'bg-white',
     barWidths: ['70%', '90%', '65%', '80%']
@@ -220,12 +223,23 @@ const projects = ref([
     resourcesUsed: 4,
     iconComponent: MusicNoteIcon,
     type: 'mobile',
-    url: '',
+    url: 'https://open.spotify.com/',
     mockupClass: 'music-mockup',
     contentClass: 'bg-gradient-to-br from-blue-50 to-indigo-50',
     barWidths: ['60%', '75%', '50%']
   }
 ])
+function openProject(project) {
+  if (project && project.url) {
+    try {
+      window.open(project.url, '_blank', 'noopener')
+    } catch (e) {
+      // fallback to location change
+      window.location.href = project.url
+    }
+  }
+}
+
 </script>
 
 <style scoped>

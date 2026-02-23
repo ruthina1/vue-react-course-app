@@ -31,19 +31,33 @@
             <ul class="space-y-4">
               <li v-for="(item, itemIndex) in module.items" :key="itemIndex" class="flex items-start group">
                 <div class="flex-1">
-                  <!-- Link if courseId is present, otherwise span -->
-                  <component 
-                    :is="courseId ? 'router-link' : 'span'"
-                    :to="courseId ? `/${courseId}/lesson/${item.slug}` : undefined"
+                  <!-- Prefer a router-link when we can resolve a lesson route, otherwise fall back to a clickable anchor that navigates programmatically -->
+                  <router-link
+                    v-if="lessonRouteFor(item)"
+                    :to="lessonRouteFor(item)"
                     :class="[
                       {'font-bold text-blue-600': item.isPractice, 'text-gray-700 group-hover:text-gray-900': !item.isPractice},
-                      courseId ? 'hover:text-blue-500 cursor-pointer transition-colors block' : '',
+                      'hover:text-blue-500 cursor-pointer transition-colors block',
                       'text-base leading-relaxed'
                     ]"
                   >
                     <Wrench v-if="item.isPractice" :size="16" class="inline-block mr-1" />
                     {{ item.text }}
-                  </component>
+                  </router-link>
+
+                  <a
+                    v-else
+                    role="button"
+                    @click.prevent="navigateToLesson(item)"
+                    :class="[
+                      {'font-bold text-blue-600': item.isPractice, 'text-gray-700 group-hover:text-gray-900': !item.isPractice},
+                      'hover:text-blue-500 cursor-pointer transition-colors block',
+                      'text-base leading-relaxed'
+                    ]"
+                  >
+                    <Wrench v-if="item.isPractice" :size="16" class="inline-block mr-1" />
+                    {{ item.text }}
+                  </a>
 
                   <!-- Nested Items -->
                   <ul v-if="item.children && item.children.length" class="mt-3 ml-4 space-y-2">
@@ -64,6 +78,8 @@
 
 <script setup>
 import { Wrench } from 'lucide-vue-next'
+import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
 
 defineProps({
   title: {
@@ -80,18 +96,40 @@ defineProps({
   },
   modules: {
     type: Array,
-    required: true,
-    // Structure:
-    // [
-    //   {
-    //     title: "Module Name",
-    //     description: "Optional description",
-    //     items: [
-    //       { text: "Topic 1", isPractice: false, children: [], slug: "topic-1" },
-    //       { text: "Practice Task", isPractice: true, slug: "practice-task" }
-    //     ]
-    //   }
-    // ]
+    required: true
   }
 })
+
+const route = useRoute()
+const router = useRouter()
+
+const targetCourseId = computed(() => {
+  // Prefer explicit prop, fallback to current route param
+  return (route.params.courseId) ? String(route.params.courseId) : ''
+})
+
+// Helper to generate a slug fallback when lesson data lacks one
+const generateSlug = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+}
+
+function lessonRouteFor(item) {
+  const cid = (typeof __props !== 'undefined' && __props.courseId) ? __props.courseId : (route.params.courseId || '')
+  const slug = item.slug || generateSlug(item.text || '')
+  if (!cid || !slug) return null
+  return { name: 'lesson', params: { courseId: cid, lessonId: slug } }
+}
+
+function navigateToLesson(item) {
+  const to = lessonRouteFor(item)
+  if (to) {
+    router.push(to)
+  }
+}
 </script>

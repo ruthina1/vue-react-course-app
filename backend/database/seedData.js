@@ -2783,10 +2783,10 @@ npm run dev
 \`\`\`
 
 This creates a project with:
-- ✅ Hot Module Replacement (HMR)
-- ✅ Modern build tools
-- ✅ TypeScript support (optional)
-- ✅ Router & Pinia (optional)
+-  Hot Module Replacement (HMR)
+-  Modern build tools
+-  TypeScript support (optional)
+-  Router & Pinia (optional)
 
 ## Project Structure
 
@@ -2974,10 +2974,10 @@ body { }
 
 ## Benefits
 
-- ✅ Everything in one place
-- ✅ Better IDE support
-- ✅ Scoped CSS by default
-- ✅ Easy to share and reuse
+-  Everything in one place
+-  Better IDE support
+-  Scoped CSS by default
+-  Easy to share and reuse
 
 ## Practice
 
@@ -5646,11 +5646,11 @@ class Welcome extends React.Component {
 
 ## Why Functional Components?
 
-- ✅ Simpler syntax
-- ✅ Better performance
-- ✅ Easier to test
-- ✅ Hooks work only with functions
-- ✅ Less boilerplate
+-  Simpler syntax
+-  Better performance
+-  Easier to test
+-  Hooks work only with functions
+-  Less boilerplate
 
 ## Modern Approach
 
@@ -8146,15 +8146,15 @@ Use everything you've learned in your capstone project.
 
 ## Concepts to Apply
 
-- ✅ Components and Props
-- ✅ useState for state management
-- ✅ useEffect for side effects
-- ✅ Forms and controlled inputs
-- ✅ React Router for navigation
-- ✅ Context API for global state
-- ✅ Custom hooks for reusable logic
-- ✅ API integration
-- ✅ Deployment
+-  Components and Props
+-  useState for state management
+-  useEffect for side effects
+-  Forms and controlled inputs
+-  React Router for navigation
+-  Context API for global state
+-  Custom hooks for reusable logic
+-  API integration
+-  Deployment
 
 ## Project Checklist
 

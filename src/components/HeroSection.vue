@@ -47,6 +47,9 @@
           :style="getItemStyle(item, index)"
           @mouseenter="handleItemHover(index)"
           @mouseleave="handleItemLeave(index)"
+          @click="openItem(item)"
+          role="button"
+          tabindex="0"
         >
           <div class="item-content">
             <div class="item-icon">
@@ -54,6 +57,14 @@
             </div>
             <div class="item-title">{{ item.title }}</div>
             <div class="item-description">{{ item.description }}</div>
+
+            <!-- Hover preview tooltip shown on hover -->
+            <div class="absolute left-6 right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+              <div class="bg-white/95 backdrop-blur-sm p-3 rounded-md border border-gray-100 text-sm text-gray-700 shadow">
+                <strong class="block text-sm text-gray-900">Quick Preview</strong>
+                <div class="mt-1">{{ item.description }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -79,6 +90,28 @@
       </div>
     </div>
   </section>
+
+  <!-- Modal for selected grid item -->
+  <div v-if="selectedItem" class="">
+    <div class="hero-modal-backdrop" @click="closeItem"></div>
+    <div class="hero-modal flex items-center justify-center">
+      <div class="modal-card bg-white shadow-2xl border border-gray-100 p-6">
+        <div class="flex items-start gap-6">
+          <div class="w-24 h-24 flex-shrink-0 rounded-lg bg-gray-50 flex items-center justify-center">
+            <component :is="getIconComponent(selectedItem.iconName)" class="w-12 h-12 text-gray-500" />
+          </div>
+          <div>
+            <h3 class="text-2xl font-bold">{{ selectedItem.title }}</h3>
+            <p class="text-gray-600 mt-2">{{ selectedItem.description }}</p>
+            <div class="mt-4">
+              <button class="btn-primary mr-3">Explore</button>
+              <button class="btn-secondary" @click="closeItem">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -128,6 +161,21 @@ const itemRefs = ref([])
 const hoveredIndex = ref(-1)
 const initialPositions = ref([])
 
+// Modal / selected item state
+const selectedItem = ref(null)
+
+function openItem(item) {
+  selectedItem.value = item
+}
+
+function closeItem() {
+  selectedItem.value = null
+}
+
+function handleKey(e) {
+  if (e.key === 'Escape') closeItem()
+}
+
 // Grid items data - each card has its own speed/delay for staggered effect
 const gridItems = ref([
   { iconName: 'Zap', title: 'Vue.js', description: 'Progressive Framework', x: 0, y: 0, speed: 0.08 },
@@ -166,10 +214,13 @@ onMounted(() => {
       }
     })
   }, 50)
+
+  window.addEventListener('keydown', handleKey)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', recalculateGrid)
+  window.removeEventListener('keydown', handleKey)
 })
 
 function initializeGridPositions() {
@@ -354,4 +405,27 @@ function handleItemLeave() {
   }
 }
 </style>
+
+/* Modal overlay styles */
+.hero-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  z-index: 60;
+}
+.hero-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 70;
+  max-width: 900px;
+  width: calc(100% - 48px);
+}
+
+.hero-modal .modal-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
 

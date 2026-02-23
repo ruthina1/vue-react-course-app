@@ -28,6 +28,9 @@
           v-for="project in projects"
           :key="project.id"
           class="group cursor-pointer"
+          @click="openProject(project)"
+          role="button"
+          tabindex="0"
         >
           <!-- Project Card -->
           <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200 hover:border-black transition-colors">
@@ -71,16 +74,24 @@
             </div>
 
             <!-- Project Info -->
-            <div class="p-6">
+            <div class="p-6 relative">
               <h3 class="text-xl font-bold text-black mb-2">{{ project.name }}</h3>
               <p class="text-gray-600 mb-4">{{ project.description }}</p>
+
+              <!-- Hover description preview (appears on hover) -->
+              <div class="absolute left-6 right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                <div class="bg-white/90 backdrop-blur-sm p-3 rounded-md border border-gray-100 text-sm text-gray-700 shadow">
+                  <strong class="block text-sm text-gray-900">Preview</strong>
+                  <div class="mt-1">{{ project.description }}</div>
+                </div>
+              </div>
 
               <!-- Resources Used -->
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                   <span class="text-sm text-gray-500">{{ project.resourcesUsed }} Resources Used</span>
                 </div>
-                <a href="#" class="text-black font-medium hover:underline">
+                <a href="#" class="text-black font-medium hover:underline" @click.stop>
                   View →
                 </a>
               </div>
@@ -98,10 +109,33 @@
       </div>
     </div>
   </section>
+
+  <!-- Modal / Selected Project Overlay -->
+  <div v-if="selectedProject" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeProject"></div>
+    <div class="relative z-10 max-w-3xl w-full mx-4">
+      <div class="bg-white rounded-xl overflow-hidden shadow-2xl border border-gray-100">
+        <div class="p-6 flex items-start gap-6">
+          <div class="w-24 h-24 flex-shrink-0 rounded-lg bg-gray-50 flex items-center justify-center">
+            <component :is="selectedProject.iconComponent" class="w-12 h-12 text-gray-500" />
+          </div>
+          <div class="flex-1">
+            <h3 class="text-2xl font-bold text-black">{{ selectedProject.name }}</h3>
+            <p class="text-gray-600 mt-2">{{ selectedProject.description }}</p>
+            <div class="mt-4 text-sm text-gray-500">Resources used: {{ selectedProject.resourcesUsed }}</div>
+            <div class="mt-6 flex items-center gap-3">
+              <a :href="selectedProject.url ? ('https://' + selectedProject.url) : '#'" target="_blank" rel="noopener" class="btn-primary inline-flex items-center">Open Project</a>
+              <button @click="closeProject" class="btn-secondary">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 // Icon Components
 const ShoppingCartIcon = {
@@ -227,6 +261,29 @@ const projects = ref([
     barWidths: ['60%', '75%', '50%']
   }
 ])
+
+// State for selected project modal
+const selectedProject = ref(null)
+
+function openProject(project) {
+  selectedProject.value = project
+}
+
+function closeProject() {
+  selectedProject.value = null
+}
+
+function handleKey(e) {
+  if (e.key === 'Escape') closeProject()
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKey)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKey)
+})
 </script>
 
 <style scoped>
