@@ -10,49 +10,60 @@ const __dirname = dirname(__filename);
 const vueLessons = [
   {
     moduleTitle: 'Web Fundamentals (Prerequisite)',
-    lessons: [
+   lessons: [
       {
         title: 'HTML basics',
         slug: 'html-basics',
         content: `# HTML Basics
 
-HTML (HyperText Markup Language) is the foundation of web development. It provides the structure for web pages.
+HTML (HyperText Markup Language) is the standard markup language used to create the skeleton of web pages. It uses "tags" to annotate text, images, and other content for display in a web browser.
 
 ## Key Concepts
 
 ### Document Structure
-Every HTML document follows a basic structure:
+Every valid HTML5 document must follow a specific nesting order. The browser uses the \`<!DOCTYPE html>\` declaration to ensure the page is rendered in standards mode.
+
+
+
 \`\`\`html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Web Page</title>
 </head>
 <body>
-    <h1>Hello World</h1>
+    <header>
+        <h1>Welcome to My Portfolio</h1>
+    </header>
 </body>
 </html>
 \`\`\`
 
 ### Common Elements
-- **Headings**: \`<h1>\` to \`<h6>\` for different heading levels
-- **Paragraphs**: \`<p>\` for text content
-- **Links**: \`<a href="url">\` for navigation
-- **Images**: \`<img src="path" alt="description">\`
-- **Lists**: \`<ul>\`, \`<ol>\`, \`<li>\` for unordered/ordered lists
-- **Divs**: \`<div>\` for grouping elements
+* **Headings**: \`<h1>\` (most important) down to \`<h6>\` (least important). Search engines use these to index your page structure.
+* **Text Formatting**: \`<p>\` for paragraphs, \`<strong>\` for bold importance, and \`<em>\` for emphasis.
+* **Hyperlinks**: Use \`<a href="url" target="_blank">\` to link to other pages. The \`target="_blank"\` attribute opens links in a new tab.
+* **Media**: \`<img src="image.jpg" alt="description">\`. Always include the \`alt\` attribute for accessibility and SEO.
+* **Lists**:
+    * **Unordered**: \`<ul>\` for bullet points.
+    * **Ordered**: \`<ol>\` for numbered steps.
 
 ### Semantic HTML
-Use semantic elements for better structure:
-- \`<header>\`, \`<nav>\`, \`<main>\`, \`<section>\`, \`<article>\`, \`<footer>\`
+Semantic elements clearly describe their meaning to both the browser and the developer. Instead of using generic \`<div>\` tags for everything, use:
+* \`<nav>\`: For navigation links.
+* \`<main>\`: For the unique, primary content of the document.
+* \`<section>\`: For grouping related content (e.g., "About Me" or "Services").
+* \`<article>\`: For independent, reusable content like blog posts.
+* \`<aside>\`: For sidebars or tangentially related content.
 
 ## Practice
-Create a simple HTML page with:
-1. A header with your name
-2. A navigation menu
-3. A main section with an article
-4. A footer with copyright info`,
+Create a professional biography page containing:
+1. A semantic \`<header>\` with a level 1 heading.
+2. A \`<nav>\` containing an unordered list with links to "Home" and "Contact".
+3. A \`<main>\` area with a \`<section>\` about your skills and an \`<article>\` describing your last project.
+4. A \`<footer>\` using the \`&copy;\` entity for copyright.`,
         isPractice: false,
         estimatedTime: 10
       },
@@ -61,65 +72,69 @@ Create a simple HTML page with:
         slug: 'css-basics-flexbox-grid',
         content: `# CSS Basics: Flexbox & Grid
 
-CSS (Cascading Style Sheets) controls the visual presentation of HTML elements.
+CSS (Cascading Style Sheets) is the "skin" of the web. Modern layouts rely on Flexbox and Grid to create responsive designs that work on any screen size.
 
-## Flexbox
+## Flexbox (Flexible Box Layout)
 
-Flexbox is a one-dimensional layout method for arranging items in rows or columns.
+Flexbox is a **one-dimensional** layout model. It deals with either a row or a column at a time. It is perfect for aligning items within a container.
 
 ### Key Properties
 
-**Container (parent):**
+**The Parent (Flex Container):**
+
+
 \`\`\`css
-.container {
+.navbar {
     display: flex;
-    flex-direction: row; /* or column */
-    justify-content: center; /* main axis alignment */
-    align-items: center; /* cross axis alignment */
-    gap: 20px;
+    flex-direction: row; /* Options: row, row-reverse, column, column-reverse */
+    justify-content: space-between; /* Alignment on main-axis: flex-start, center, flex-end, space-around */
+    align-items: center; /* Alignment on cross-axis */
+    flex-wrap: wrap; /* Allows items to flow to the next line */
+    gap: 1.5rem; /* Modern way to add spacing between items */
 }
 \`\`\`
 
-**Items (children):**
+**The Children (Flex Items):**
 \`\`\`css
-.item {
-    flex: 1; /* grow and shrink */
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-basis: 0;
+.nav-link {
+    flex: 1; /* Shorthand for flex-grow: 1, flex-shrink: 1, flex-basis: 0% */
+    order: 2; /* Change visual order without changing HTML */
 }
 \`\`\`
 
 ## CSS Grid
 
-Grid is a two-dimensional layout system for rows and columns.
+Grid is **two-dimensional**. It allows you to align items in both rows and columns simultaneously, making it the primary tool for high-level page layouts.
 
 ### Key Properties
 
 \`\`\`css
-.grid-container {
+.dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto;
+    /* Defines 3 columns: 250px, whatever space is left, and 20% of width */
+    grid-template-columns: 250px 1fr 20%;
+    /* Creates 2 rows: one sized by content, one 300px tall */
+    grid-template-rows: auto 300px;
     gap: 20px;
 }
 
-.grid-item {
-    grid-column: span 1;
-    grid-row: span 1;
+.sidebar {
+    grid-column: 1 / 2; /* Starts at line 1, ends at line 2 */
+}
+
+.main-content {
+    grid-column: 2 / span 2; /* Starts at line 2 and spans 2 columns */
 }
 \`\`\`
 
 ## When to Use What?
-
-- **Flexbox**: One-dimensional layouts (navigation bars, card rows)
-- **Grid**: Two-dimensional layouts (page layouts, complex designs)
-- **Both**: Can be combined for powerful layouts
+* **Use Flexbox** for small-scale layouts: centering a button inside a div, a horizontal navigation bar, or a vertical sidebar.
+* **Use Grid** for large-scale layouts: a full-page dashboard, a complex photo gallery, or a magazine-style news layout.
 
 ## Practice
-Create a responsive card layout using:
-1. Grid for the overall layout (3 columns on desktop, 1 on mobile)
-2. Flexbox for card internal layout`,
+Design a "Product Gallery" page:
+1. Use **Grid** to create a 4-column responsive layout that collapses to 1 column on small screens.
+2. Use **Flexbox** inside each product card to vertically center the "Buy Now" button at the bottom.`,
         isPractice: false,
         estimatedTime: 15
       },
@@ -128,94 +143,101 @@ Create a responsive card layout using:
         slug: 'javascript-es6',
         content: `# JavaScript ES6+
 
-Modern JavaScript features that are essential for Vue.js development.
+ECMAScript 2015 (ES6) and subsequent updates transformed JavaScript into a robust, modern language. These features are the "lingua franca" of frameworks like Vue.js.
 
-## let and const
+## Variable Scoping: let and const
+
+Avoid \`var\`. Modern JS uses block-scoping to prevent bugs caused by "hoisting."
 
 \`\`\`javascript
-// let - block-scoped, can be reassigned
-let name = 'John';
-name = 'Jane'; // OK
+// Use 'const' by default for values that won't be reassigned
+const API_URL = 'https://api.example.com';
 
-// const - block-scoped, cannot be reassigned
-const age = 25;
-age = 26; // Error!
+// Use 'let' only when you expect the value to change (e.g., loops/counters)
+let counter = 0;
+counter += 1; 
+
+// Block Scope Example
+if (true) {
+    let temp = 'Visible only here';
+}
+// console.log(temp); // ReferenceError!
 \`\`\`
 
 ## Arrow Functions
 
+Arrow functions provide a shorter syntax and do not have their own \`this\` context, which is critical when working with Vue components.
+
 \`\`\`javascript
-// Traditional function
-function add(a, b) {
-    return a + b;
-}
+// Single line - implicit return
+const multiply = (a, b) => a * b;
 
-// Arrow function
-const add = (a, b) => a + b;
-
-// With single parameter
-const square = x => x * x;
-
-// With body
-const greet = name => {
-    const message = \`Hello, \${name}!\`;
-    return message;
+// Multi-line - requires 'return' keyword
+const getFullName = (user) => {
+    const { firstName, lastName } = user;
+    return \`\${firstName} \${lastName}\`;
 };
+
+// Use in Arrays (Common in Vue)
+const prices = [10, 20, 30];
+const discounted = prices.map(p => p * 0.9);
 \`\`\`
 
-## Destructuring
+## Destructuring & Spread Operators
+
+Destructuring allows you to "unpack" values from arrays or properties from objects into distinct variables.
 
 \`\`\`javascript
-// Array destructuring
-const [first, second] = [1, 2];
+const user = { id: 1, username: 'dev_jane', email: 'jane@test.com' };
 
-// Object destructuring
-const { name, age } = { name: 'John', age: 25 };
+// Object Destructuring
+const { username, email } = user;
 
-// Function parameters
-function greet({ name, age }) {
-    return \`\${name} is \${age} years old\`;
-}
+// Spread Operator (...) - Perfect for copying objects/arrays
+const updatedUser = { ...user, active: true };
+const numbers = [1, 2, 3];
+const newNumbers = [...numbers, 4, 5];
 \`\`\`
 
-## Modules
+## Modules (Import/Export)
+
+Modules allow you to split your code into multiple files, making it maintainable and scalable.
 
 \`\`\`javascript
-// Export
-export const PI = 3.14159;
-export function add(a, b) { return a + b; }
-export default class Calculator { }
+// utils.js
+export const formatDate = (date) => { /* logic */ };
+export default function logger(msg) { console.log(msg); }
 
-// Import
-import Calculator, { PI, add } from './math.js';
+// main.js
+import logger, { formatDate } from './utils.js';
 \`\`\`
 
-## Promises & async/await
+## Asynchronous JS: Promises & Async/Await
+
+Modern web apps rely on fetching data from servers. \`async/await\` is the cleanest way to handle these asynchronous operations.
 
 \`\`\`javascript
-// Promise
-fetch('/api/data')
-    .then(response => response.json())
-    .then(data => console.log(data))
-    .catch(error => console.error(error));
-
-// async/await
-async function fetchData() {
+// The Modern Standard: async/await
+async function getUserData(userId) {
     try {
-        const response = await fetch('/api/data');
+        const response = await fetch(\`https://api.example.com/users/\${userId}\`);
+        
+        if (!response.ok) throw new Error('Network response was not ok');
+        
         const data = await response.json();
-        return data;
+        return data; // Wraps result in a Promise automatically
     } catch (error) {
-        console.error(error);
+        console.error('Fetch error:', error.message);
     }
 }
 \`\`\`
 
 ## Practice
-Create a function that:
-1. Fetches user data from an API
-2. Destructures the response
-3. Uses async/await syntax`,
+Write a script that:
+1. Defines an array of user objects.
+2. Uses an **Arrow Function** with \`.filter()\` to find active users.
+3. Uses **Destructuring** inside a loop to log each active user's name.
+4. Uses **async/await** to simulate a login request for one of those users.`,
         isPractice: false,
         estimatedTime: 20,
         children: ['let / const', 'Arrow functions', 'Destructuring', 'Modules', 'Promises & async/await']

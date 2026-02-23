@@ -37,17 +37,17 @@
       <!-- Grid -->
       <div 
         ref="gridContainer"
-        class="grid-container"
+        :class="['grid-container', { 'overlay-open': selectedIndex !== null }]"
       >
         <div
           v-for="(item, index) in gridItems"
           :key="index"
           :ref="el => { if (el) itemRefs[index] = el }"
-          class="grid-item"
+          :class="['grid-item', 'group', { selected: selectedIndex === index } ]"
           :style="getItemStyle(item, index)"
           @mouseenter="handleItemHover(index)"
           @mouseleave="handleItemLeave(index)"
-          @click="openItem(item)"
+          @click="openItem(item, index)"
           role="button"
           tabindex="0"
         >
@@ -58,11 +58,21 @@
             <div class="item-title">{{ item.title }}</div>
             <div class="item-description">{{ item.description }}</div>
 
-            <!-- Hover preview tooltip shown on hover -->
-            <div class="absolute left-6 right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-              <div class="bg-white/95 backdrop-blur-sm p-3 rounded-md border border-gray-100 text-sm text-gray-700 shadow">
-                <strong class="block text-sm text-gray-900">Quick Preview</strong>
-                <div class="mt-1">{{ item.description }}</div>
+            <!-- Hover preview: richer description shown on hover -->
+            <div class="absolute left-6 right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto">
+              <div class="bg-white/95 backdrop-blur-sm p-4 rounded-md border border-gray-100 text-sm text-gray-700 shadow">
+                <strong class="block text-sm text-gray-900">{{ item.title }}</strong>
+                <div class="mt-2 text-sm text-gray-600">{{ item.longDescription || item.description }}</div>
+              </div>
+            </div>
+
+            <!-- When this card is selected, show a focused detail panel (the card itself is promoted) -->
+            <div v-if="selectedIndex === index" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div class="bg-white/0 pointer-events-auto p-6 w-full max-w-full">
+                <div class="p-4 rounded">
+                  <h4 class="text-base text-gray-500 mb-2">Overview</h4>
+                  <div class="text-gray-700 leading-relaxed text-sm max-h-[50vh] overflow-auto">{{ item.longDescription || item.description }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -91,27 +101,8 @@
     </div>
   </section>
 
-  <!-- Modal for selected grid item -->
-  <div v-if="selectedItem" class="">
-    <div class="hero-modal-backdrop" @click="closeItem"></div>
-    <div class="hero-modal flex items-center justify-center">
-      <div class="modal-card bg-white shadow-2xl border border-gray-100 p-6">
-        <div class="flex items-start gap-6">
-          <div class="w-24 h-24 flex-shrink-0 rounded-lg bg-gray-50 flex items-center justify-center">
-            <component :is="getIconComponent(selectedItem.iconName)" class="w-12 h-12 text-gray-500" />
-          </div>
-          <div>
-            <h3 class="text-2xl font-bold">{{ selectedItem.title }}</h3>
-            <p class="text-gray-600 mt-2">{{ selectedItem.description }}</p>
-            <div class="mt-4">
-              <button class="btn-primary mr-3">Explore</button>
-              <button class="btn-secondary" @click="closeItem">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Backdrop to capture clicks when a card is promoted; clicking closes the selection -->
+  <div v-if="selectedIndex !== null" class="hero-backdrop" @click="closeItem"></div>
 </template>
 
 <script setup>
@@ -163,12 +154,16 @@ const initialPositions = ref([])
 
 // Modal / selected item state
 const selectedItem = ref(null)
+const selectedIndex = ref(null)
 
-function openItem(item) {
+function openItem(item, index) {
+  // mark which index is selected and keep reference to item
+  selectedIndex.value = index
   selectedItem.value = item
 }
 
 function closeItem() {
+  selectedIndex.value = null
   selectedItem.value = null
 }
 
@@ -178,15 +173,15 @@ function handleKey(e) {
 
 // Grid items data - each card has its own speed/delay for staggered effect
 const gridItems = ref([
-  { iconName: 'Zap', title: 'Vue.js', description: 'Progressive Framework', x: 0, y: 0, speed: 0.08 },
-  { iconName: 'Atom', title: 'React', description: 'UI Library', x: 0, y: 0, speed: 0.10 },
-  { iconName: 'Palette', title: 'Components', description: 'Reusable UI', x: 0, y: 0, speed: 0.12 },
-  { iconName: 'BookOpen', title: 'Lessons', description: 'Step by step', x: 0, y: 0, speed: 0.09 },
-  { iconName: 'Wrench', title: 'Tools', description: 'Dev utilities', x: 0, y: 0, speed: 0.11 },
-  { iconName: 'Rocket', title: 'Projects', description: 'Real examples', x: 0, y: 0, speed: 0.13 },
-  { iconName: 'Lightbulb', title: 'Tips', description: 'Best practices', x: 0, y: 0, speed: 0.07 },
-  { iconName: 'Book', title: 'Docs', description: 'Comprehensive', x: 0, y: 0, speed: 0.14 },
-  { iconName: 'Target', title: 'Practice', description: 'Hands-on learning', x: 0, y: 0, speed: 0.15 },
+  { iconName: 'Zap', title: 'Vue.js', description: 'Progressive Framework', longDescription: 'Comprehensive Vue.js 3 course: Composition API, components, reactivity, routing, and state management with Pinia.', x: 0, y: 0, speed: 0.08 },
+  { iconName: 'Atom', title: 'React', description: 'UI Library', longDescription: 'React 18 fundamentals including hooks, context, performance optimizations, and practical patterns for building UIs.', x: 0, y: 0, speed: 0.10 },
+  { iconName: 'Palette', title: 'Components', description: 'Reusable UI', longDescription: 'Design and build reusable component libraries, style systems, and accessible UI primitives with examples.', x: 0, y: 0, speed: 0.12 },
+  { iconName: 'BookOpen', title: 'Lessons', description: 'Step by step', longDescription: 'Structured lessons with examples, exercises, and checkpoints to track your learning progress.', x: 0, y: 0, speed: 0.09 },
+  { iconName: 'Wrench', title: 'Tools', description: 'Dev utilities', longDescription: 'Tooling tips for Vite, linters, formatters, deployment pipelines, and productivity workflows.', x: 0, y: 0, speed: 0.11 },
+  { iconName: 'Rocket', title: 'Projects', description: 'Real examples', longDescription: 'Project-driven learning: build real apps, deploy them, and learn how to structure production code.', x: 0, y: 0, speed: 0.13 },
+  { iconName: 'Lightbulb', title: 'Tips', description: 'Best practices', longDescription: 'Practical tips and best practices for writing maintainable and performant front-end code.', x: 0, y: 0, speed: 0.07 },
+  { iconName: 'Book', title: 'Docs', description: 'Comprehensive', longDescription: 'Curated documentation and cheat-sheets for quick reference while you code.', x: 0, y: 0, speed: 0.14 },
+  { iconName: 'Target', title: 'Practice', description: 'Hands-on learning', longDescription: 'Hands-on exercises and challenges to reinforce concepts and build muscle memory.', x: 0, y: 0, speed: 0.15 },
 ])
 
 // Initialize grid positions
@@ -215,13 +210,16 @@ onMounted(() => {
     })
   }, 50)
 
+  // Escape key closes promoted card
   window.addEventListener('keydown', handleKey)
+
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', recalculateGrid)
   window.removeEventListener('keydown', handleKey)
 })
+  
 
 function initializeGridPositions() {
   if (!gridContainer.value) return
@@ -274,6 +272,11 @@ function handleItemLeave() {
 }
 
 // Removed scroll-based opacity reduction for normal visibility
+
+function showDetails(item, index) {
+  // Promote the item (same behavior as clicking the card)
+  openItem(item, index)
+}
 </script>
 
 <style scoped>
@@ -339,6 +342,38 @@ function handleItemLeave() {
 
 .grid-item:hover .item-icon {
   transform: scale(1.05);
+}
+
+/* Selected (promoted) card styles: promote the clicked card itself */
+.grid-container.overlay-open .grid-item:not(.selected) {
+  filter: blur(3px) grayscale(0.15);
+  opacity: 0.45;
+  transform: scale(0.98);
+  pointer-events: none;
+}
+
+.grid-item.selected {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(720px, calc(100% - 48px)) !important;
+  height: auto !important;
+  z-index: 80 !important;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+  transition: transform 0.28s cubic-bezier(.2,.9,.2,1), box-shadow 0.2s;
+}
+
+.grid-item.selected .item-content {
+  border-radius: 14px;
+  padding: 28px;
+}
+
+/* Backdrop to capture clicks when a card is promoted */
+.hero-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
 }
 
 .item-title {
