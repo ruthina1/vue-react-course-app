@@ -189,60 +189,123 @@ onMounted(() => {
   loadLesson()
 })
 
-// Format markdown-like content (simple implementation)
+// Format markdown-like content (enhanced simple renderer)
 const formatContent = (content) => {
   if (!content) return ''
-  
-  // Split by lines and process
+  // If the markdown content starts with a top-level H1 that duplicates
+  // the lesson title, remove that first header to avoid showing the title twice.
+  try {
+    const firstLine = content.split('\n', 1)[0].trim()
+    if (firstLine.startsWith('#')) {
+      // Extract header text after leading #'s and optional space
+      const headerText = firstLine.replace(/^#+\s*/, '').trim()
+      const lessonTitle = currentLesson?.text || ''
+      if (lessonTitle && headerText && headerText.toLowerCase() === String(lessonTitle).toLowerCase()) {
+        // Remove the first header line
+        content = content.split('\n').slice(1).join('\n')
+      }
+    }
+  } catch (e) {
+    // ignore parsing errors and continue
+  }
+
   const lines = content.split('\n')
   let html = ''
   let inCodeBlock = false
   let codeBlockContent = ''
   let codeBlockLang = ''
-  
+  let inList = false
+  let listBuffer = []
+
+  const flushList = () => {
+    if (!inList) return
+    html += '<ul class="list-disc list-inside mb-4 text-gray-700">'
+    for (const item of listBuffer) {
+      html += `<li>${item}</li>`
+    }
+    html += '</ul>'
+    listBuffer = []
+    inList = false
+  }
+
+  // Simple replacements for links and images
+  const inlineReplacements = (text) => {
+    // Images: ![alt](url)
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="inline-block max-w-full h-auto align-middle rounded"/>')
+    // Links: [text](url)
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>')
+    // Bold **text**
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Inline code `code`
+    text = text.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">$1</code>')
+    return text
+  }
+
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    
-    // Code blocks
-    if (line.startsWith('```')) {
+    const raw = lines[i]
+
+    // Code block handling
+    if (raw.startsWith('```')) {
       if (inCodeBlock) {
-        // End code block
-        html += `<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code>${codeBlockContent.trim()}</code></pre>`
+        // end
+        html += `<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code>${escapeHtml(codeBlockContent.trim())}</code></pre>`
         codeBlockContent = ''
         codeBlockLang = ''
         inCodeBlock = false
       } else {
-        // Start code block
-        codeBlockLang = line.replace('```', '').trim()
+        codeBlockLang = raw.replace('```', '').trim()
         inCodeBlock = true
       }
       continue
     }
-    
+
     if (inCodeBlock) {
-      codeBlockContent += line + '\n'
+      codeBlockContent += raw + '\n'
       continue
     }
-    
+
+    const line = raw.trimEnd()
+
+    // Lists (unordered '- ' or '* ')
+    const listMatch = line.match(/^[-*]\s+(.*)$/)
+    if (listMatch) {
+      inList = true
+      listBuffer.push(inlineReplacements(listMatch[1]))
+      continue
+    } else {
+      // flush any pending list
+      flushList()
+    }
+
     // Headers
     if (line.startsWith('# ')) {
-      html += `<h1 class="text-3xl font-bold mt-8 mb-4">${line.replace('# ', '')}</h1>`
+      html += `<h1 class="text-3xl font-bold mt-8 mb-4">${inlineReplacements(line.replace('# ', ''))}</h1>`
     } else if (line.startsWith('## ')) {
-      html += `<h2 class="text-2xl font-bold mt-6 mb-3">${line.replace('## ', '')}</h2>`
+      html += `<h2 class="text-2xl font-bold mt-6 mb-3">${inlineReplacements(line.replace('## ', ''))}</h2>`
     } else if (line.startsWith('### ')) {
-      html += `<h3 class="text-xl font-semibold mt-4 mb-2">${line.replace('### ', '')}</h3>`
+      html += `<h3 class="text-xl font-semibold mt-4 mb-2">${inlineReplacements(line.replace('### ', ''))}</h3>`
     } else if (line.trim() === '') {
-      html += '<br>'
+      // paragraph separator
+      // add a small gap
+      html += ''
     } else {
-      // Regular paragraph with inline formatting
-      let para = line
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">$1</code>')
-      html += `<p class="mb-4 leading-relaxed">${para}</p>`
+      // Paragraph
+      html += `<p class="mb-4 leading-relaxed">${inlineReplacements(line)}</p>`
     }
   }
-  
+
+  // flush remaining
+  flushList()
+  if (inCodeBlock) {
+    html += `<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code>${escapeHtml(codeBlockContent.trim())}</code></pre>`
+  }
+
   return html
+}
+
+// Escape HTML inside code blocks
+function escapeHtml(unsafe) {
+  return unsafe.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 // Helper if slug is missing in data (safety fallback)

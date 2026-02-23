@@ -62,3 +62,33 @@ html {
   background: #555;
 }
 
+/* Ensure code blocks and inline code inside prose are readable */
+@layer components {
+  .prose pre {
+    color: #111827; /* dark text */
+    background-color: #f3f4f6 !important; /* light gray fallback */
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    white-space: pre; /* preserve spacing */
+    overflow: auto;
+  }
+
+  .prose pre code {
+    color: inherit !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+  }
+
+  .prose code {
+    background-color: rgba(243,244,246,1);
+    color: #111827;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+    font-size: 0.95rem;
+  }
+}
+
