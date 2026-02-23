@@ -2,6 +2,11 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  WARNING: JWT_SECRET is not set. Using a development default secret.');
+}
+
 const router = express.Router();
 
 // Register
@@ -25,7 +30,7 @@ router.post('/register', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
     
@@ -69,7 +74,7 @@ router.post('/login', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
     
@@ -98,7 +103,7 @@ export const verifyToken = (req, res, next) => {
   }
   
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.userId = decoded.userId;
     next();
   } catch (error) {

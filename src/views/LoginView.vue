@@ -68,16 +68,16 @@ const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
 
-function handleLogin() {
+async function handleLogin() {
   isLoading.value = true
-  // Simulate API call
-  setTimeout(() => {
-    authStore.login(email.value, password.value)
-    isLoading.value = false
-    // Redirect to original destination or home
+  const result = await authStore.login(email.value, password.value)
+  isLoading.value = false
+  if (result.ok) {
     const redirect = router.currentRoute.value.query.redirect || '/'
     router.push(redirect)
-  }, 500)
+  } else {
+    alert(result.error || 'Login failed')
+  }
 }
 </script>
 

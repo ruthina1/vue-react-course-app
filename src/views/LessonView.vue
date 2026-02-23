@@ -198,10 +198,13 @@ const formatContent = (content) => {
     const firstLine = content.split('\n', 1)[0].trim()
     if (firstLine.startsWith('#')) {
       // Extract header text after leading #'s and optional space
-      const headerText = firstLine.replace(/^#+\s*/, '').trim()
-      const lessonTitle = currentLesson?.text || ''
-      if (lessonTitle && headerText && headerText.toLowerCase() === String(lessonTitle).toLowerCase()) {
-        // Remove the first header line
+      const headerTextRaw = firstLine.replace(/^#+\s*/, '').trim()
+      const lessonTitle = String(currentLesson?.text || '').trim()
+      const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
+      const headerText = normalize(headerTextRaw)
+      const titleNorm = normalize(lessonTitle)
+      // Remove header if it exactly matches or startsWith the lesson title (robust against punctuation/case)
+      if (titleNorm && headerText && (headerText === titleNorm || headerText.startsWith(titleNorm) || titleNorm.startsWith(headerText))) {
         content = content.split('\n').slice(1).join('\n')
       }
     }

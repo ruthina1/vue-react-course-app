@@ -101,7 +101,13 @@ const routes = [
 // Create and export the router instance
 const router = createRouter({
   history: createWebHistory(), // Use HTML5 history mode
-  routes // Pass our routes array
+  routes, // Pass our routes array
+  // Always scroll to top when navigating to a new route
+  scrollBehavior(to, from, savedPosition) {
+    // If browser provides saved position (back/forward), use it
+    if (savedPosition) return savedPosition
+    return { left: 0, top: 0 }
+  }
 })
 
 // Navigation Guard - runs before each route navigation

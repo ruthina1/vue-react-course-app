@@ -83,16 +83,18 @@ const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
 
-function handleRegister() {
+async function handleRegister() {
   isLoading.value = true
-  // Simulate API call
-  setTimeout(() => {
-    authStore.register(email.value, password.value, name.value)
-    isLoading.value = false
-    // Redirect to original destination or home
+  // Derive a username from name (fallback to email prefix)
+  const username = (name.value || email.value.split('@')[0] || '').toString().toLowerCase().replace(/\s+/g, '-')
+  const result = await authStore.register(username, email.value, password.value, name.value)
+  isLoading.value = false
+  if (result.ok) {
     const redirect = router.currentRoute.value.query.redirect || '/'
     router.push(redirect)
-  }, 500)
+  } else {
+    alert(result.error || 'Registration failed')
+  }
 }
 </script>
 

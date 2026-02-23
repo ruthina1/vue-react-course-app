@@ -30,23 +30,7 @@
           <div class="px-8 py-6 bg-white">
             <ul class="space-y-4">
               <li v-for="(item, itemIndex) in module.items" :key="itemIndex" class="flex items-start group">
-                <!-- Checkbox styling -->
-                <div class="flex-shrink-0 mt-1">
-                  <div 
-                    class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors duration-200"
-                    :class="[
-                      item.completed 
-                        ? 'bg-green-500 border-green-500' 
-                        : 'border-gray-300 group-hover:border-gray-400'
-                    ]"
-                  >
-                    <svg v-if="item.completed" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                </div>
-                
-                <div class="ml-4 flex-1">
+                <div class="flex-1">
                   <!-- Link if courseId is present, otherwise span -->
                   <component 
                     :is="courseId ? 'router-link' : 'span'"

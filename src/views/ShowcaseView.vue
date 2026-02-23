@@ -191,12 +191,12 @@ const projects = ref([
   },
   {
     id: 4,
-    name: 'Portfolio Website',
-    description: 'Stunning portfolio with React and Framer Motion',
-    resourcesUsed: 7,
+    name: 'Ruth Gizat Portfolio',
+    description: 'Personal portfolio — final project hosted on Vercel',
+    resourcesUsed: 5,
     iconComponent: PaletteIcon,
     type: 'web',
-    url: 'portfolio.example.com',
+    url: 'https://vercel.com/ruth-gizat-zelelews-projects/final-port',
     mockupClass: 'portfolio-mockup',
     contentClass: 'bg-gradient-to-br from-purple-50 to-pink-50',
     barWidths: ['75%', '55%', '80%']

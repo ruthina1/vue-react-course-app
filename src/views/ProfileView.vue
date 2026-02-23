@@ -239,31 +239,70 @@ function handleLogout() {
 }
 
 function loadProgress() {
-  // Calculate progress from localStorage or API
-  // For now, simulate some progress
-  vueProgress.value = 15
-  reactProgress.value = 8
-  completedLessons.value = 12
-  totalLessons.value = 80
-  
-  // Load recent activity
-  recentActivity.value = [
-    {
-      title: 'Completed: Text interpolation {{ }}',
-      course: 'Vue.js Mastery',
-      date: '2 days ago'
-    },
-    {
-      title: 'Completed: Directives',
-      course: 'Vue.js Mastery',
-      date: '3 days ago'
-    },
-    {
-      title: 'Started: Components',
-      course: 'React Ecosystem',
-      date: '5 days ago'
-    }
-  ]
+  // Fetch real progress and recent activity from API
+  const stored = localStorage.getItem('auth')
+  if (!stored) return
+  let token = null
+  let userId = null
+  try {
+    const auth = JSON.parse(stored)
+    token = auth.token
+    userId = auth.user?.id
+  } catch (e) {
+    console.error('Failed to parse auth from localStorage', e)
+    return
+  }
+
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+  // progress
+  fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api'}/users/${userId}/progress`, {
+    headers
+  })
+    .then(r => r.ok ? r.json() : Promise.reject(r))
+    .then(data => {
+      completedLessons.value = data.completedLessons || 0
+      totalLessons.value = data.totalLessons || 0
+      // map courses to known ones (vue/react)
+      const vueCourse = data.courses?.find(c => c.courseId === 'vue')
+      const reactCourse = data.courses?.find(c => c.courseId === 'react')
+      vueProgress.value = vueCourse ? vueCourse.percentage : 0
+      reactProgress.value = reactCourse ? reactCourse.percentage : 0
+    })
+    .catch(err => {
+      console.error('Failed to load progress', err)
+    })
+
+  // recent activity
+  fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api'}/users/${userId}/activity`, {
+    headers
+  })
+    .then(r => r.ok ? r.json() : Promise.reject(r))
+    .then(data => {
+      // Format simple relative date
+      recentActivity.value = (data.activity || []).map(a => ({
+        title: a.title,
+        course: a.course,
+        date: formatRelative(a.last_accessed || a.completed_at)
+      }))
+    })
+    .catch(err => {
+      console.error('Failed to load activity', err)
+    })
+}
+
+function formatRelative(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const diff = Date.now() - date.getTime()
+  const sec = Math.floor(diff / 1000)
+  const min = Math.floor(sec / 60)
+  const hrs = Math.floor(min / 60)
+  const days = Math.floor(hrs / 24)
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`
+  if (hrs > 0) return `${hrs} hour${hrs > 1 ? 's' : ''} ago`
+  if (min > 0) return `${min} minute${min > 1 ? 's' : ''} ago`
+  return 'just now'
 }
 
 onMounted(() => {
@@ -278,6 +317,32 @@ onMounted(() => {
     email: authStore.user?.email || ''
   }
   
+  // Try to refresh user info from API (token required)
+  const stored = localStorage.getItem('auth')
+  if (stored) {
+    try {
+      const auth = JSON.parse(stored)
+      const token = auth.token
+      if (token && auth.user?.id) {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api'}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(r => r.ok ? r.json() : Promise.reject(r))
+          .then(d => {
+            if (d.user) {
+              authStore.user = d.user
+              profileForm.value.name = d.user.full_name || d.user.username || profileForm.value.name
+              // update localStorage
+              localStorage.setItem('auth', JSON.stringify({ token, user: d.user }))
+            }
+          })
+          .catch(() => {})
+      }
+    } catch (e) {
+      console.error('Failed to parse auth', e)
+    }
+  }
+
   loadProgress()
 })
 </script>
