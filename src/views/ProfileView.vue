@@ -238,7 +238,7 @@ function handleLogout() {
   router.push('/')
 }
 
-function loadProgress() {
+async function loadProgress() {
   // Fetch real progress and recent activity from API
   const stored = localStorage.getItem('auth')
   if (!stored) return
@@ -254,41 +254,45 @@ function loadProgress() {
   }
 
   const headers = token ? { Authorization: `Bearer ${token}` } : {}
+  const base = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api'
 
-  // progress
-  fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api'}/users/${userId}/progress`, {
-    headers
-  })
-    .then(r => r.ok ? r.json() : Promise.reject(r))
-    .then(data => {
-      completedLessons.value = data.completedLessons || 0
-      totalLessons.value = data.totalLessons || 0
-      // map courses to known ones (vue/react)
-      const vueCourse = data.courses?.find(c => c.courseId === 'vue')
-      const reactCourse = data.courses?.find(c => c.courseId === 'react')
-      vueProgress.value = vueCourse ? vueCourse.percentage : 0
-      reactProgress.value = reactCourse ? reactCourse.percentage : 0
-    })
-    .catch(err => {
-      console.error('Failed to load progress', err)
-    })
+  try {
+    const resp = await fetch(`${base}/users/${userId}/progress`, { headers })
+    if (resp.status === 401) {
+      authStore.logout()
+      router.push('/login')
+      return
+    }
+    if (!resp.ok) throw new Error(`Progress fetch failed: ${resp.status}`)
+    const data = await resp.json()
+    completedLessons.value = data.completedLessons ?? data.completedLessons ?? 0
+    totalLessons.value = data.totalLessons ?? data.totalLessons ?? 0
+    const vueCourse = data.courses?.find(c => c.courseId === 'vue')
+    const reactCourse = data.courses?.find(c => c.courseId === 'react')
+    vueProgress.value = vueCourse ? vueCourse.percentage : 0
+    reactProgress.value = reactCourse ? reactCourse.percentage : 0
+  } catch (err) {
+    console.error('Failed to load progress', err)
+  }
 
-  // recent activity
-  fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api'}/users/${userId}/activity`, {
-    headers
-  })
-    .then(r => r.ok ? r.json() : Promise.reject(r))
-    .then(data => {
-      // Format simple relative date
-      recentActivity.value = (data.activity || []).map(a => ({
-        title: a.title,
-        course: a.course,
-        date: formatRelative(a.last_accessed || a.completed_at)
-      }))
-    })
-    .catch(err => {
-      console.error('Failed to load activity', err)
-    })
+  try {
+    const resp2 = await fetch(`${base}/users/${userId}/activity`, { headers })
+    if (resp2.status === 401) {
+      authStore.logout()
+      router.push('/login')
+      return
+    }
+    if (!resp2.ok) throw new Error(`Activity fetch failed: ${resp2.status}`)
+    const data2 = await resp2.json()
+    recentActivity.value = (data2.activity || []).map(a => ({
+      title: a.title,
+      course: a.course,
+      date: formatRelative(a.last_accessed || a.completed_at),
+      raw: a
+    }))
+  } catch (err) {
+    console.error('Failed to load activity', err)
+  }
 }
 
 function formatRelative(dateString) {

@@ -55,16 +55,12 @@
             <div class="item-icon">
               <component :is="getIconComponent(item.iconName)" :size="48" />
             </div>
-            <div class="item-title">{{ item.title }}</div>
-            <div class="item-description">{{ item.description }}</div>
-
-            <!-- Hover preview: richer description shown on hover -->
-            <div class="absolute left-6 right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto">
-              <div class="bg-white/95 backdrop-blur-sm p-4 rounded-md border border-gray-100 text-sm text-gray-700 shadow">
-                <strong class="block text-sm text-gray-900">{{ item.title }}</strong>
-                <div class="mt-2 text-sm text-gray-600">{{ item.longDescription || item.description }}</div>
-              </div>
+            <div class="item-body">
+              <div class="item-title">{{ item.title }}</div>
+              <div class="item-description">{{ item.description }}</div>
             </div>
+
+            <!-- Hover preview removed: no extra box while hovering -->
 
             <!-- When this card is selected, show a focused detail panel (the card itself is promoted) -->
             <div v-if="selectedIndex === index" class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -254,7 +250,15 @@ function initializeGridPositions() {
 
 function getItemStyle(item, index) {
   const hoverOffset = hoveredIndex.value === index ? 10 : 0
-  
+
+  // If item is selected, avoid applying positional transform so CSS can center it cleanly
+  if (selectedIndex.value === index) {
+    return {
+      transition: 'transform 0.28s cubic-bezier(.2,.9,.2,1)',
+      zIndex: 100
+    }
+  }
+
   return {
     transform: `translate(${item.x}px, ${item.y + hoverOffset}px)`,
     transition: 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
@@ -340,6 +344,11 @@ function showDetails(item, index) {
   justify-content: flex-start;
 }
 
+.item-body {
+  display: flex;
+  flex-direction: column;
+}
+
 .grid-item:hover .item-icon {
   transform: scale(1.05);
 }
@@ -357,16 +366,42 @@ function showDetails(item, index) {
   left: 50% !important;
   top: 50% !important;
   transform: translate(-50%, -50%) !important;
-  width: min(720px, calc(100% - 48px)) !important;
+  width: min(820px, calc(100% - 48px)) !important;
   height: auto !important;
   z-index: 80 !important;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+  box-shadow: 0 40px 120px rgba(0,0,0,0.30);
   transition: transform 0.28s cubic-bezier(.2,.9,.2,1), box-shadow 0.2s;
 }
 
 .grid-item.selected .item-content {
   border-radius: 14px;
   padding: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+}
+
+.grid-item.selected .item-icon {
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.grid-item.selected .item-title {
+  font-size: 26px;
+  margin-bottom: 6px;
+}
+
+.grid-item.selected .item-description {
+  color: #374151;
+}
+
+.grid-item.selected .item-body {
+  max-width: 100%;
 }
 
 /* Backdrop to capture clicks when a card is promoted */
@@ -374,6 +409,8 @@ function showDetails(item, index) {
   position: fixed;
   inset: 0;
   z-index: 70;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
 }
 
 .item-title {
@@ -441,26 +478,4 @@ function showDetails(item, index) {
 }
 </style>
 
-/* Modal overlay styles */
-.hero-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
-  z-index: 60;
-}
-.hero-modal {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 70;
-  max-width: 900px;
-  width: calc(100% - 48px);
-}
-
-.hero-modal .modal-card {
-  border-radius: 12px;
-  overflow: hidden;
-}
 
